@@ -77,7 +77,7 @@ npm ci && npm run build
 Start command:
 
 ```bash
-npm run start
+npm run start -- -H 0.0.0.0 -p $PORT
 ```
 
 After the service deploys, run the archive seed once from the host shell:
