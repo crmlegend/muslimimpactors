@@ -53,6 +53,41 @@ PAYLOAD_SECRET=replace-with-a-long-secret
 NEXT_PUBLIC_SITE_URL=https://muslimimpactors.americanmotivations.com
 ```
 
+For the first Supabase-backed production launch, set:
+
+```bash
+DATABASE_URL=postgres://...
+PAYLOAD_SECRET=replace-with-a-long-secret
+NEXT_PUBLIC_SITE_URL=https://muslimimpactors.americanmotivations.com
+PAYLOAD_POSTGRES_PUSH=true
+```
+
+After the first successful deploy and seed, remove `PAYLOAD_POSTGRES_PUSH` or set it to `false`.
+
+## Launch-Day Deployment
+
+Recommended MVP path: deploy the Next.js/Payload app to Render or Railway and use Supabase for Postgres.
+
+Build command:
+
+```bash
+npm ci && npm run build
+```
+
+Start command:
+
+```bash
+npm run start
+```
+
+After the service deploys, run the archive seed once from the host shell:
+
+```bash
+npm run seed:archive
+```
+
+Then add `muslimimpactors.americanmotivations.com` as the custom domain and create the DNS record requested by the host.
+
 ## Implemented Collections
 
 - Users
