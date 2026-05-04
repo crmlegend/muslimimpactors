@@ -69,6 +69,22 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    sources: Source;
+    sponsors: Sponsor;
+    topics: Topic;
+    tags: Tag;
+    occupations: Occupation;
+    places: Place;
+    people: Person;
+    stories: Story;
+    articles: Article;
+    'expert-essays': ExpertEssay;
+    pages: Page;
+    'contributor-applications': ContributorApplication;
+    'ai-jobs': AiJob;
+    'social-accounts': SocialAccount;
+    'social-posts': SocialPost;
+    'audit-logs': AuditLog;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,13 +94,29 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    sources: SourcesSelect<false> | SourcesSelect<true>;
+    sponsors: SponsorsSelect<false> | SponsorsSelect<true>;
+    topics: TopicsSelect<false> | TopicsSelect<true>;
+    tags: TagsSelect<false> | TagsSelect<true>;
+    occupations: OccupationsSelect<false> | OccupationsSelect<true>;
+    places: PlacesSelect<false> | PlacesSelect<true>;
+    people: PeopleSelect<false> | PeopleSelect<true>;
+    stories: StoriesSelect<false> | StoriesSelect<true>;
+    articles: ArticlesSelect<false> | ArticlesSelect<true>;
+    'expert-essays': ExpertEssaysSelect<false> | ExpertEssaysSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
+    'contributor-applications': ContributorApplicationsSelect<false> | ContributorApplicationsSelect<true>;
+    'ai-jobs': AiJobsSelect<false> | AiJobsSelect<true>;
+    'social-accounts': SocialAccountsSelect<false> | SocialAccountsSelect<true>;
+    'social-posts': SocialPostsSelect<false> | SocialPostsSelect<true>;
+    'audit-logs': AuditLogsSelect<false> | AuditLogsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
   };
   db: {
-    defaultIDType: string;
+    defaultIDType: number;
   };
   fallbackLocale: null;
   globals: {};
@@ -122,7 +154,45 @@ export interface UserAuthOperations {
  * via the `definition` "users".
  */
 export interface User {
-  id: string;
+  id: number;
+  name: string;
+  role:
+    | 'subscriber'
+    | 'author'
+    | 'writer_researcher'
+    | 'editor'
+    | 'legal_rights_reviewer'
+    | 'social_manager'
+    | 'publisher_admin'
+    | 'super_admin'
+    | 'read_only_reviewer';
+  /**
+   * Role requested through public signup. Admins can review this before changing the actual CMS role.
+   */
+  requestedPublicRole?: ('author' | 'editor' | 'subscriber') | null;
+  /**
+   * Public-facing contributor profile. Show only after editorial approval.
+   */
+  publicContributorProfile?: {
+    approvedContributor?: boolean | null;
+    publicProfileEnabled?: boolean | null;
+    /**
+     * Contributor biography shown publicly after approval. Authors should provide this during signup.
+     */
+    biography?: string | null;
+    /**
+     * Subject expertise, writing focus, or community background.
+     */
+    expertise?: string | null;
+    affiliation?: string | null;
+    websiteOrSocial?: string | null;
+  };
+  assignedTopics?: (number | Topic)[] | null;
+  active?: boolean | null;
+  /**
+   * Internal-only notes about this team member and their editorial responsibilities.
+   */
+  notes?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -144,11 +214,108 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "topics".
+ */
+export interface Topic {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  parentTopic?: (number | null) | Topic;
+  featuredImage?: (number | null) | Media;
+  relatedTopics?: (number | Topic)[] | null;
+  /**
+   * Optional public metadata for search engines and social previews. Leave blank when unsure.
+   */
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+    canonicalUrl?: string | null;
+  };
+  /**
+   * Choose where this record sits in the editorial process. Only records that are ready and approved should be published.
+   */
+  workflowStatus:
+    | 'draft'
+    | 'in_editorial_review'
+    | 'editor_approved'
+    | 'rights_review_required'
+    | 'rights_cleared'
+    | 'ready_to_publish'
+    | 'published'
+    | 'unpublished'
+    | 'archived';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
-  id: string;
-  alt: string;
+  id: number;
+  title: string;
+  mediaKind: 'image' | 'document' | 'audio' | 'video' | 'word_document' | 'generated_derivative' | 'other';
+  /**
+   * Required for public images before publish.
+   */
+  altText?: string | null;
+  caption?: string | null;
+  creditLine?: string | null;
+  /**
+   * Track whether the source or media rights are owned, licensed, public domain, restricted, pending, or unknown.
+   */
+  rightsStatus:
+    | 'owned'
+    | 'licensed'
+    | 'public_domain'
+    | 'permission_granted'
+    | 'permission_pending'
+    | 'restricted'
+    | 'unknown';
+  licenseName?: string | null;
+  licenseUrl?: string | null;
+  sourceUrl?: string | null;
+  expiryDate?: string | null;
+  usageRestrictions?: string | null;
+  publicDeliveryAllowed?: boolean | null;
+  /**
+   * Set automatically later for public images wider than 800px.
+   */
+  requiresWatermark?: boolean | null;
+  watermarkApplied?: boolean | null;
+  /**
+   * Placeholder for generated derivative key/path until storage is connected.
+   */
+  watermarkedFileNote?: string | null;
+  /**
+   * Use this when text, audio, video, voice, or likeness has been assisted by AI or generated synthetically.
+   */
+  aiDisclosure?:
+    | (
+        | 'none'
+        | 'ai_assisted_internal'
+        | 'ai_generated_text'
+        | 'ai_generated_audio'
+        | 'ai_generated_video'
+        | 'synthetic_voice'
+        | 'synthetic_likeness'
+      )
+    | null;
+  /**
+   * Choose where this record sits in the editorial process. Only records that are ready and approved should be published.
+   */
+  workflowStatus:
+    | 'draft'
+    | 'in_editorial_review'
+    | 'editor_approved'
+    | 'rights_review_required'
+    | 'rights_cleared'
+    | 'ready_to_publish'
+    | 'published'
+    | 'unpublished'
+    | 'archived';
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -160,13 +327,1474 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    public?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sources".
+ */
+export interface Source {
+  id: number;
+  sourceType:
+    | 'book'
+    | 'journal_article'
+    | 'news_article'
+    | 'web_article'
+    | 'private_interview'
+    | 'archival_document'
+    | 'online_video'
+    | 'government_record'
+    | 'letter'
+    | 'document_scan'
+    | 'dataset'
+    | 'other';
+  title?: string | null;
+  shortCitation: string;
+  fullCitation: string;
+  authors?:
+    | {
+        name: string;
+        id?: string | null;
+      }[]
+    | null;
+  publication?: string | null;
+  publisher?: string | null;
+  publicationDateText?: string | null;
+  publicationDate?: string | null;
+  pages?: string | null;
+  url?: string | null;
+  archiveUrl?: string | null;
+  accessedDate?: string | null;
+  mediaType?: ('text' | 'audio' | 'video' | 'image' | 'pdf' | 'mixed') | null;
+  interviewDetails?: {
+    interviewee?: string | null;
+    interviewer?: string | null;
+    location?: string | null;
+    mediaType?: string | null;
+  };
+  archivalDetails?: {
+    institution?: string | null;
+    collectionName?: string | null;
+    boxOrFolder?: string | null;
+  };
+  /**
+   * Track whether the source or media rights are owned, licensed, public domain, restricted, pending, or unknown.
+   */
+  rightsStatus:
+    | 'owned'
+    | 'licensed'
+    | 'public_domain'
+    | 'permission_granted'
+    | 'permission_pending'
+    | 'restricted'
+    | 'unknown';
+  rightsNotes?: string | null;
+  reliabilityNotes?: string | null;
+  attachedFile?: (number | null) | Media;
+  relatedPeople?: (number | Person)[] | null;
+  relatedTopics?: (number | Topic)[] | null;
+  /**
+   * Choose where this record sits in the editorial process. Only records that are ready and approved should be published.
+   */
+  workflowStatus:
+    | 'draft'
+    | 'in_editorial_review'
+    | 'editor_approved'
+    | 'rights_review_required'
+    | 'rights_cleared'
+    | 'ready_to_publish'
+    | 'published'
+    | 'unpublished'
+    | 'archived';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Create public personality dossiers for American Muslims, historical Muslim figures, contributors, and reviewers. Use the Preview button before publishing.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "people".
+ */
+export interface Person {
+  id: number;
+  /**
+   * Primary public name shown in headings, cards, search, and lists.
+   */
+  name: string;
+  /**
+   * URL-safe identifier, for example ibn-khaldun.
+   */
+  slug: string;
+  /**
+   * Optional longer display title or honorific line for the public page.
+   */
+  displayTitle?: string | null;
+  /**
+   * Choose the main role used for filtering and editorial routing.
+   */
+  personType:
+    | 'scholar'
+    | 'jurist'
+    | 'hadith_scholar'
+    | 'historian'
+    | 'scientist_physician'
+    | 'poet_litterateur'
+    | 'ruler_statesperson'
+    | 'institution_builder'
+    | 'early_community_figure'
+    | 'expert_contributor'
+    | 'interviewer'
+    | 'narrator'
+    | 'author'
+    | 'institutional_contact'
+    | 'other';
+  aliases?:
+    | {
+        alias: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Optional honorific or traditional name form, if appropriate.
+   */
+  honorificName?: string | null;
+  /**
+   * Human-readable era, such as 732-808 AH / 1332-1406 CE.
+   */
+  eraLabel?: string | null;
+  /**
+   * School, discipline, intellectual tradition, or movement.
+   */
+  scholarlyTradition?: string | null;
+  /**
+   * Major works, institutions, inventions, poems, books, or legacy items.
+   */
+  primaryWorks?: string | null;
+  /**
+   * Display date when exact birth date is uncertain.
+   */
+  birthDateText?: string | null;
+  /**
+   * Exact date if known.
+   */
+  birthDate?: string | null;
+  /**
+   * Display date when exact death date is uncertain.
+   */
+  deathDateText?: string | null;
+  /**
+   * Exact date if known.
+   */
+  deathDate?: string | null;
+  /**
+   * Birthplace as public text.
+   */
+  birthPlace?: string | null;
+  /**
+   * Region, polity, or identity label. Use carefully for pre-modern figures.
+   */
+  nationality?: string | null;
+  occupations?: (number | Occupation)[] | null;
+  /**
+   * One-paragraph public summary used in cards, search, and page intros.
+   */
+  shortBio: string;
+  /**
+   * Long-form biography for the public dossier.
+   */
+  fullBio?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Approved portrait, manuscript image, artwork, or neutral visual slot.
+   */
+  portrait?: (number | null) | Media;
+  /**
+   * Optional public credit line if different from the media record.
+   */
+  portraitCreditOverride?: string | null;
+  /**
+   * Optional YouTube embed ID for the featured public video. Example: E-RLbRbRjS8.
+   */
+  youtubeEmbedId?: string | null;
+  /**
+   * Optional approved external video URL shown on the public personality page preview.
+   */
+  externalVideoUrl?: string | null;
+  /**
+   * Credit/source name for the external video, such as a museum channel.
+   */
+  externalVideoSource?: string | null;
+  /**
+   * Editorial note explaining why this video is used, rights status, or replacement guidance.
+   */
+  externalVideoNote?: string | null;
+  relatedTopics?: (number | Topic)[] | null;
+  /**
+   * Indexing labels used by editors for discovery, review queues, source confidence, and public grouping.
+   */
+  tags?: (number | Tag)[] | null;
+  relatedPeople?: (number | Person)[] | null;
+  relatedPlaces?: (number | Place)[] | null;
+  timelineEvents?:
+    | {
+        dateLabel: string;
+        title: string;
+        description?: string | null;
+        sources?: (number | Source)[] | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Attach the source records that support this page. Public pages can show these below the article.
+   */
+  sources?: (number | Source)[] | null;
+  /**
+   * Connect this public record to sponsor support. Public pages can show a credit line when approved.
+   */
+  sponsorship?: {
+    primarySponsor?: (number | null) | Sponsor;
+    additionalSponsors?: (number | Sponsor)[] | null;
+    /**
+     * Optional page-specific sponsor wording. Leave blank to use the sponsor default.
+     */
+    publicCreditLine?: string | null;
+    showSponsorCredit?: boolean | null;
+  };
+  /**
+   * Editor confirms the record is fact-checked, readable, and ready for final review.
+   */
+  editorApproved?: boolean | null;
+  editorApprovedBy?: (number | null) | User;
+  editorApprovedAt?: string | null;
+  /**
+   * Rights reviewer confirms media, quotations, and source usage are legally cleared for publication.
+   */
+  rightsCleared?: boolean | null;
+  rightsClearedBy?: (number | null) | User;
+  rightsClearedAt?: string | null;
+  /**
+   * Summarize license terms, permission details, attribution requirements, or restrictions.
+   */
+  rightsNotes?: string | null;
+  /**
+   * Optional public metadata for search engines and social previews. Leave blank when unsure.
+   */
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+    canonicalUrl?: string | null;
+  };
+  /**
+   * Choose where this record sits in the editorial process. Only records that are ready and approved should be published.
+   */
+  workflowStatus:
+    | 'draft'
+    | 'in_editorial_review'
+    | 'editor_approved'
+    | 'rights_review_required'
+    | 'rights_cleared'
+    | 'ready_to_publish'
+    | 'published'
+    | 'unpublished'
+    | 'archived';
+  /**
+   * Internal notes for researchers, editors, reviewers, and publishers. These do not appear publicly.
+   */
+  editorialNotes?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "occupations".
+ */
+export interface Occupation {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: number;
+  name: string;
+  slug: string;
+  tagType: 'general' | 'era' | 'theme' | 'technical' | 'editorial' | 'rights' | 'ai';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "places".
+ */
+export interface Place {
+  id: number;
+  name: string;
+  slug: string;
+  placeType: 'city' | 'region' | 'country' | 'institution' | 'landmark' | 'other';
+  coordinates?: {
+    latitude?: number | null;
+    longitude?: number | null;
+  };
+  description?: string | null;
+  relatedSources?: (number | Source)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Manage sponsors and connect them to articles, personalities, stories, essays, pages, and public campaigns.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sponsors".
+ */
+export interface Sponsor {
+  id: number;
+  name: string;
+  slug: string;
+  sponsorType: 'organization' | 'foundation' | 'individual' | 'family' | 'institution' | 'campaign';
+  /**
+   * Public sponsor description shown on sponsor pages and content credits.
+   */
+  summary: string;
+  /**
+   * Optional public sponsor website.
+   */
+  websiteUrl?: string | null;
+  logo?: (number | null) | Media;
+  /**
+   * People or profiles directly sponsored by this sponsor.
+   */
+  sponsoredPeople?: (number | Person)[] | null;
+  sponsoredStories?: (number | Story)[] | null;
+  sponsoredArticles?: (number | Article)[] | null;
+  sponsoredEssays?: (number | ExpertEssay)[] | null;
+  sponsoredPages?: (number | Page)[] | null;
+  /**
+   * Optional wording shown on public pages, for example “Research supported by ...”.
+   */
+  publicCreditLine?: string | null;
+  /**
+   * Editor confirms the record is fact-checked, readable, and ready for final review.
+   */
+  editorApproved?: boolean | null;
+  editorApprovedBy?: (number | null) | User;
+  editorApprovedAt?: string | null;
+  /**
+   * Optional public metadata for search engines and social previews. Leave blank when unsure.
+   */
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+    canonicalUrl?: string | null;
+  };
+  /**
+   * Choose where this record sits in the editorial process. Only records that are ready and approved should be published.
+   */
+  workflowStatus:
+    | 'draft'
+    | 'in_editorial_review'
+    | 'editor_approved'
+    | 'rights_review_required'
+    | 'rights_cleared'
+    | 'ready_to_publish'
+    | 'published'
+    | 'unpublished'
+    | 'archived';
+  /**
+   * Internal notes for researchers, editors, reviewers, and publishers. These do not appear publicly.
+   */
+  editorialNotes?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Build video, audio, text, document, or expert-commentary story chapters. Preview the public story page before publishing.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stories".
+ */
+export interface Story {
+  id: number;
+  /**
+   * Public story title shown in listings and the story page.
+   */
+  title: string;
+  /**
+   * URL-safe identifier, for example writing-history-as-a-science.
+   */
+  slug: string;
+  /**
+   * Optional supporting line under the story title.
+   */
+  subtitle?: string | null;
+  /**
+   * Choose the main media or editorial format for this story.
+   */
+  format: 'video' | 'audio' | 'text' | 'image_document' | 'expert_commentary' | 'ai_generated_video';
+  /**
+   * Main personality connected to this story chapter.
+   */
+  primaryPerson?: (number | null) | Person;
+  relatedPeople?: (number | Person)[] | null;
+  relatedArticles?: (number | Article)[] | null;
+  storyOrder?: number | null;
+  /**
+   * Short public description for cards, search, and story intros.
+   */
+  summary: string;
+  /**
+   * Editorial notes or article text.
+   */
+  body?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Approved video file or external-video media record.
+   */
+  videoAsset?: (number | null) | Media;
+  /**
+   * Optional YouTube embed ID for local testing or approved external embeds. Example: 9RBo-E09zFw.
+   */
+  youtubeEmbedId?: string | null;
+  /**
+   * Optional approved external video URL for this story chapter when the file is not hosted internally.
+   */
+  externalVideoUrl?: string | null;
+  /**
+   * Credit/source name for the external video.
+   */
+  externalVideoSource?: string | null;
+  /**
+   * Rights, replacement, or editorial notes for this embedded video. Public pages should show only approved language.
+   */
+  externalVideoNote?: string | null;
+  /**
+   * Approved audio file for an audio-led story.
+   */
+  audioAsset?: (number | null) | Media;
+  /**
+   * Letters, PDFs, scans, or supporting documents shown with this story.
+   */
+  documentAssets?: (number | Media)[] | null;
+  /**
+   * Public thumbnail image for story cards.
+   */
+  thumbnail?: (number | null) | Media;
+  /**
+   * Duration in seconds, used to show a readable time label.
+   */
+  durationSeconds?: number | null;
+  /**
+   * Full transcript or edited transcript for the public story page.
+   */
+  transcript?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  transcriptSegments?:
+    | {
+        startSeconds?: number | null;
+        endSeconds?: number | null;
+        speaker?: string | null;
+        text: string;
+        id?: string | null;
+      }[]
+    | null;
+  themes: (number | Topic)[];
+  tags?: (number | Tag)[] | null;
+  placesMentioned?: (number | Place)[] | null;
+  /**
+   * Attach the source records that support this page. Public pages can show these below the article.
+   */
+  sources?: (number | Source)[] | null;
+  /**
+   * Connect this public record to sponsor support. Public pages can show a credit line when approved.
+   */
+  sponsorship?: {
+    primarySponsor?: (number | null) | Sponsor;
+    additionalSponsors?: (number | Sponsor)[] | null;
+    /**
+     * Optional page-specific sponsor wording. Leave blank to use the sponsor default.
+     */
+    publicCreditLine?: string | null;
+    showSponsorCredit?: boolean | null;
+  };
+  credits?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Use this when text, audio, video, voice, or likeness has been assisted by AI or generated synthetically.
+   */
+  aiDisclosure?:
+    | (
+        | 'none'
+        | 'ai_assisted_internal'
+        | 'ai_generated_text'
+        | 'ai_generated_audio'
+        | 'ai_generated_video'
+        | 'synthetic_voice'
+        | 'synthetic_likeness'
+      )
+    | null;
+  /**
+   * Required for synthetic or AI-generated public stories.
+   */
+  publicAiLabel?: string | null;
+  /**
+   * Track whether the source or media rights are owned, licensed, public domain, restricted, pending, or unknown.
+   */
+  rightsStatus:
+    | 'owned'
+    | 'licensed'
+    | 'public_domain'
+    | 'permission_granted'
+    | 'permission_pending'
+    | 'restricted'
+    | 'unknown';
+  /**
+   * Editor confirms the record is fact-checked, readable, and ready for final review.
+   */
+  editorApproved?: boolean | null;
+  editorApprovedBy?: (number | null) | User;
+  editorApprovedAt?: string | null;
+  /**
+   * Rights reviewer confirms media, quotations, and source usage are legally cleared for publication.
+   */
+  rightsCleared?: boolean | null;
+  rightsClearedBy?: (number | null) | User;
+  rightsClearedAt?: string | null;
+  /**
+   * Summarize license terms, permission details, attribution requirements, or restrictions.
+   */
+  rightsNotes?: string | null;
+  metrics?: {
+    viewCount?: number | null;
+    shareCount?: number | null;
+  };
+  /**
+   * Optional public metadata for search engines and social previews. Leave blank when unsure.
+   */
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+    canonicalUrl?: string | null;
+  };
+  /**
+   * Choose where this record sits in the editorial process. Only records that are ready and approved should be published.
+   */
+  workflowStatus:
+    | 'draft'
+    | 'in_editorial_review'
+    | 'editor_approved'
+    | 'rights_review_required'
+    | 'rights_cleared'
+    | 'ready_to_publish'
+    | 'published'
+    | 'unpublished'
+    | 'archived';
+  /**
+   * Internal notes for researchers, editors, reviewers, and publishers. These do not appear publicly.
+   */
+  editorialNotes?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Create encyclopedia-style articles for concepts, events, places, organizations, and context pages.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "articles".
+ */
+export interface Article {
+  id: number;
+  title: string;
+  slug: string;
+  articleType:
+    | 'historical_event'
+    | 'concept'
+    | 'movement'
+    | 'timeline'
+    | 'person_context'
+    | 'organization'
+    | 'policy'
+    | 'place'
+    | 'technical_milestone'
+    | 'other';
+  leadSummary: string;
+  infobox?:
+    | {
+        label: string;
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  tableOfContentsEnabled?: boolean | null;
+  sections: {
+    heading: string;
+    body: {
+      root: {
+        type: string;
+        children: {
+          type: any;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    };
+    sectionSources?: (number | Source)[] | null;
+    id?: string | null;
+  }[];
+  contentBlocks?:
+    | (
+        | {
+            kicker?: string | null;
+            heading: string;
+            body?: string | null;
+            image?: (number | null) | Media;
+            primaryLinkLabel?: string | null;
+            primaryLinkUrl?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'hero';
+          }
+        | {
+            body: {
+              root: {
+                type: string;
+                children: {
+                  type: any;
+                  version: number;
+                  [k: string]: unknown;
+                }[];
+                direction: ('ltr' | 'rtl') | null;
+                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                indent: number;
+                version: number;
+              };
+              [k: string]: unknown;
+            };
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'richText';
+          }
+        | {
+            heading?: string | null;
+            people?: (number | Person)[] | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'featuredPeople';
+          }
+        | {
+            heading?: string | null;
+            stories?: (number | Story)[] | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'featuredStories';
+          }
+        | {
+            heading?: string | null;
+            articles?: (number | Article)[] | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'featuredArticles';
+          }
+        | {
+            heading?: string | null;
+            events?:
+              | {
+                  dateLabel: string;
+                  title: string;
+                  description?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'timeline';
+          }
+        | {
+            quote: string;
+            attribution?: string | null;
+            source?: (number | null) | Source;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'quote';
+          }
+        | {
+            heading?: string | null;
+            sources?: (number | Source)[] | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'sourceTable';
+          }
+        | {
+            heading?: string | null;
+            media?: (number | Media)[] | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'mediaGallery';
+          }
+        | {
+            heading?: string | null;
+            people?: (number | Person)[] | null;
+            stories?: (number | Story)[] | null;
+            articles?: (number | Article)[] | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'relatedContent';
+          }
+      )[]
+    | null;
+  relatedPeople?: (number | Person)[] | null;
+  relatedStories?: (number | Story)[] | null;
+  relatedTopics?: (number | Topic)[] | null;
+  relatedPlaces?: (number | Place)[] | null;
+  /**
+   * Attach the source records that support this page. Public pages can show these below the article.
+   */
+  sources?: (number | Source)[] | null;
+  /**
+   * Connect this public record to sponsor support. Public pages can show a credit line when approved.
+   */
+  sponsorship?: {
+    primarySponsor?: (number | null) | Sponsor;
+    additionalSponsors?: (number | Sponsor)[] | null;
+    /**
+     * Optional page-specific sponsor wording. Leave blank to use the sponsor default.
+     */
+    publicCreditLine?: string | null;
+    showSponsorCredit?: boolean | null;
+  };
+  lastReviewedAt?: string | null;
+  reviewedBy?: (number | null) | User;
+  expertReviewedBy?: (number | null) | Person;
+  revisionSummary?: string | null;
+  /**
+   * Editor confirms the record is fact-checked, readable, and ready for final review.
+   */
+  editorApproved?: boolean | null;
+  editorApprovedBy?: (number | null) | User;
+  editorApprovedAt?: string | null;
+  /**
+   * Rights reviewer confirms media, quotations, and source usage are legally cleared for publication.
+   */
+  rightsCleared?: boolean | null;
+  rightsClearedBy?: (number | null) | User;
+  rightsClearedAt?: string | null;
+  /**
+   * Summarize license terms, permission details, attribution requirements, or restrictions.
+   */
+  rightsNotes?: string | null;
+  /**
+   * Optional public metadata for search engines and social previews. Leave blank when unsure.
+   */
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+    canonicalUrl?: string | null;
+  };
+  /**
+   * Choose where this record sits in the editorial process. Only records that are ready and approved should be published.
+   */
+  workflowStatus:
+    | 'draft'
+    | 'in_editorial_review'
+    | 'editor_approved'
+    | 'rights_review_required'
+    | 'rights_cleared'
+    | 'ready_to_publish'
+    | 'published'
+    | 'unpublished'
+    | 'archived';
+  /**
+   * Internal notes for researchers, editors, reviewers, and publishers. These do not appear publicly.
+   */
+  editorialNotes?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Upload expert-submitted Word/PDF material, edit it internally, and track expert approval before publication.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "expert-essays".
+ */
+export interface ExpertEssay {
+  id: number;
+  /**
+   * Public essay title.
+   */
+  title: string;
+  /**
+   * URL-safe identifier for the essay.
+   */
+  slug: string;
+  /**
+   * Expert contributor credited as the essay author.
+   */
+  expert: number | Person;
+  /**
+   * Optional public credential line for the expert.
+   */
+  expertTitle?: string | null;
+  /**
+   * Exact credit line that must appear on the public essay.
+   */
+  requiredCreditLine: string;
+  authorDashboard?: {
+    /**
+     * Upload the expert-submitted Word document or PDF here. The editor can then paste or extract text into the editable draft fields below.
+     */
+    sourceDocument?: (number | null) | Media;
+    submissionSource?: ('email' | 'word_document' | 'pdf' | 'direct_entry' | 'other') | null;
+    submissionReceivedAt?: string | null;
+    /**
+     * Paste extracted text here before editing. Automated extraction can be added later.
+     */
+    extractedText?: string | null;
+    /**
+     * Editor-cleaned draft before moving to the public essay body.
+     */
+    editableDraft?: {
+      root: {
+        type: string;
+        children: {
+          type: any;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    } | null;
+    /**
+     * Track whether the submission is uploaded, extracted, being edited, submitted for review, approved, or rejected.
+     */
+    submissionStatus?: ('uploaded' | 'extracted' | 'editing' | 'submitted_for_review' | 'approved' | 'rejected') | null;
+  };
+  /**
+   * Final public essay body after internal editing and approval.
+   */
+  body: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  pullQuotes?:
+    | {
+        quote: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Attach the source records that support this page. Public pages can show these below the article.
+   */
+  sources?: (number | Source)[] | null;
+  relatedPeople?: (number | Person)[] | null;
+  relatedStories?: (number | Story)[] | null;
+  relatedArticles?: (number | Article)[] | null;
+  relatedTopics?: (number | Topic)[] | null;
+  /**
+   * Connect this public record to sponsor support. Public pages can show a credit line when approved.
+   */
+  sponsorship?: {
+    primarySponsor?: (number | null) | Sponsor;
+    additionalSponsors?: (number | Sponsor)[] | null;
+    /**
+     * Optional page-specific sponsor wording. Leave blank to use the sponsor default.
+     */
+    publicCreditLine?: string | null;
+    showSponsorCredit?: boolean | null;
+  };
+  /**
+   * Track whether the source or media rights are owned, licensed, public domain, restricted, pending, or unknown.
+   */
+  rightsStatus:
+    | 'owned'
+    | 'licensed'
+    | 'public_domain'
+    | 'permission_granted'
+    | 'permission_pending'
+    | 'restricted'
+    | 'unknown';
+  /**
+   * Editor confirms the record is fact-checked, readable, and ready for final review.
+   */
+  editorApproved?: boolean | null;
+  editorApprovedBy?: (number | null) | User;
+  editorApprovedAt?: string | null;
+  /**
+   * Rights reviewer confirms media, quotations, and source usage are legally cleared for publication.
+   */
+  rightsCleared?: boolean | null;
+  rightsClearedBy?: (number | null) | User;
+  rightsClearedAt?: string | null;
+  /**
+   * Summarize license terms, permission details, attribution requirements, or restrictions.
+   */
+  rightsNotes?: string | null;
+  /**
+   * Editor confirms the public essay matches the expert-approved submission or revision.
+   */
+  expertApproved?: boolean | null;
+  expertApprovedAt?: string | null;
+  expertApprovedByEditor?: (number | null) | User;
+  /**
+   * Optional public metadata for search engines and social previews. Leave blank when unsure.
+   */
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+    canonicalUrl?: string | null;
+  };
+  /**
+   * Choose where this record sits in the editorial process. Only records that are ready and approved should be published.
+   */
+  workflowStatus:
+    | 'draft'
+    | 'in_editorial_review'
+    | 'editor_approved'
+    | 'rights_review_required'
+    | 'rights_cleared'
+    | 'ready_to_publish'
+    | 'published'
+    | 'unpublished'
+    | 'archived';
+  /**
+   * Internal notes for researchers, editors, reviewers, and publishers. These do not appear publicly.
+   */
+  editorialNotes?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Assemble flexible public pages from reusable blocks. Use for special research pages, topic landings, and institute pages.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: number;
+  title: string;
+  slug: string;
+  pagePurpose: 'landing' | 'topic_landing' | 'collection' | 'campaign' | 'about' | 'press' | 'custom';
+  layoutBlocks: (
+    | {
+        kicker?: string | null;
+        heading: string;
+        body?: string | null;
+        image?: (number | null) | Media;
+        primaryLinkLabel?: string | null;
+        primaryLinkUrl?: string | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'hero';
+      }
+    | {
+        body: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        };
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'richText';
+      }
+    | {
+        heading?: string | null;
+        people?: (number | Person)[] | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'featuredPeople';
+      }
+    | {
+        heading?: string | null;
+        stories?: (number | Story)[] | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'featuredStories';
+      }
+    | {
+        heading?: string | null;
+        articles?: (number | Article)[] | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'featuredArticles';
+      }
+    | {
+        heading?: string | null;
+        events?:
+          | {
+              dateLabel: string;
+              title: string;
+              description?: string | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'timeline';
+      }
+    | {
+        quote: string;
+        attribution?: string | null;
+        source?: (number | null) | Source;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'quote';
+      }
+    | {
+        heading?: string | null;
+        sources?: (number | Source)[] | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'sourceTable';
+      }
+    | {
+        heading?: string | null;
+        media?: (number | Media)[] | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'mediaGallery';
+      }
+    | {
+        heading?: string | null;
+        people?: (number | Person)[] | null;
+        stories?: (number | Story)[] | null;
+        articles?: (number | Article)[] | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'relatedContent';
+      }
+  )[];
+  /**
+   * Connect this public record to sponsor support. Public pages can show a credit line when approved.
+   */
+  sponsorship?: {
+    primarySponsor?: (number | null) | Sponsor;
+    additionalSponsors?: (number | Sponsor)[] | null;
+    /**
+     * Optional page-specific sponsor wording. Leave blank to use the sponsor default.
+     */
+    publicCreditLine?: string | null;
+    showSponsorCredit?: boolean | null;
+  };
+  /**
+   * Editor confirms the record is fact-checked, readable, and ready for final review.
+   */
+  editorApproved?: boolean | null;
+  editorApprovedBy?: (number | null) | User;
+  editorApprovedAt?: string | null;
+  /**
+   * Rights reviewer confirms media, quotations, and source usage are legally cleared for publication.
+   */
+  rightsCleared?: boolean | null;
+  rightsClearedBy?: (number | null) | User;
+  rightsClearedAt?: string | null;
+  /**
+   * Summarize license terms, permission details, attribution requirements, or restrictions.
+   */
+  rightsNotes?: string | null;
+  /**
+   * Optional public metadata for search engines and social previews. Leave blank when unsure.
+   */
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+    canonicalUrl?: string | null;
+  };
+  /**
+   * Choose where this record sits in the editorial process. Only records that are ready and approved should be published.
+   */
+  workflowStatus:
+    | 'draft'
+    | 'in_editorial_review'
+    | 'editor_approved'
+    | 'rights_review_required'
+    | 'rights_cleared'
+    | 'ready_to_publish'
+    | 'published'
+    | 'unpublished'
+    | 'archived';
+  /**
+   * Internal notes for researchers, editors, reviewers, and publishers. These do not appear publicly.
+   */
+  editorialNotes?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Public signup and article-interest submissions. Review these before granting contributor permissions.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contributor-applications".
+ */
+export interface ContributorApplication {
+  id: number;
+  name: string;
+  email: string;
+  requestedRole: 'author' | 'editor' | 'subscriber';
+  /**
+   * Required for authors. This can become the public contributor biography after approval.
+   */
+  biography?: string | null;
+  /**
+   * Subject expertise, lived experience, research background, or writing focus.
+   */
+  expertise?: string | null;
+  affiliation?: string | null;
+  websiteOrSocial?: string | null;
+  proposedTopic?: string | null;
+  /**
+   * Short summary of the article, personality, story, source lead, or research contribution.
+   */
+  articleSummary?: string | null;
+  sourceOwnership?: ('original' | 'licensed' | 'public_domain' | 'permission_granted' | 'needs_review') | null;
+  /**
+   * Subscriber account created or linked by the public signup workflow.
+   */
+  createdUser?: (number | null) | User;
+  status: 'new' | 'needs_follow_up' | 'approved' | 'rejected' | 'converted_to_draft';
+  /**
+   * Internal review notes for editors and admins.
+   */
+  internalNotes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-jobs".
+ */
+export interface AiJob {
+  id: number;
+  jobType:
+    | 'transcript'
+    | 'summary'
+    | 'tag_suggestion'
+    | 'qa_index'
+    | 'social_post'
+    | 'video_script'
+    | 'avatar_video'
+    | 'citation_check'
+    | 'other';
+  inputCollection?: string | null;
+  inputDocumentId?: string | null;
+  promptSummary?: string | null;
+  outputDraft?: string | null;
+  provider?: string | null;
+  model?: string | null;
+  status: 'queued' | 'running' | 'needs_review' | 'approved' | 'rejected' | 'failed';
+  reviewedBy?: (number | null) | User;
+  reviewedAt?: string | null;
+  costEstimate?: number | null;
+  errorLog?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "social-accounts".
+ */
+export interface SocialAccount {
+  id: number;
+  platform: 'linkedin' | 'x';
+  displayName: string;
+  connectedEntityType: 'company_page' | 'organization' | 'individual_account';
+  externalAccountId?: string | null;
+  /**
+   * Reference name for the encrypted OAuth token or external secret connected to this account.
+   */
+  tokenReference?: string | null;
+  tokenExpiresAt?: string | null;
+  connectedBy?: (number | null) | User;
+  active?: boolean | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "social-posts".
+ */
+export interface SocialPost {
+  id: number;
+  title: string;
+  sourceContentType?: ('story' | 'article' | 'person' | 'custom') | null;
+  sourceStory?: (number | null) | Story;
+  sourceArticle?: (number | null) | Article;
+  sourcePerson?: (number | null) | Person;
+  platformVariants?:
+    | {
+        platform: 'linkedin' | 'x';
+        postText: string;
+        media?: (number | Media)[] | null;
+        link?: string | null;
+        hashtags?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  targetAccounts?: (number | SocialAccount)[] | null;
+  approvalStatus: 'draft' | 'in_review' | 'approved' | 'scheduled' | 'published' | 'failed' | 'cancelled';
+  scheduledFor?: string | null;
+  approvedBy?: (number | null) | User;
+  publishedAt?: string | null;
+  remotePostIds?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  errorLog?: string | null;
+  analyticsSnapshot?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * System record of content changes, publishing actions, users, timestamps, and field-level summaries.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "audit-logs".
+ */
+export interface AuditLog {
+  id: number;
+  action: 'create' | 'update' | 'publish' | 'unpublish' | 'delete';
+  collectionSlug: string;
+  documentId: string;
+  documentTitle: string;
+  changedBy?: (number | null) | User;
+  changedByEmail: string;
+  changedAt: string;
+  publishedBy?: (number | null) | User;
+  publishedAt?: string | null;
+  /**
+   * Short machine-generated summary of the affected fields. Use the field list below for details.
+   */
+  summary?: string | null;
+  changedFields?:
+    | {
+        field: string;
+        beforeValue?: string | null;
+        afterValue?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Previous document snapshot, stored as JSON text for review.
+   */
+  beforeSnapshot?: string | null;
+  /**
+   * Current document snapshot, stored as JSON text for review.
+   */
+  afterSnapshot?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: string;
+  id: number;
   key: string;
   data:
     | {
@@ -183,20 +1811,84 @@ export interface PayloadKv {
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: string;
+  id: number;
   document?:
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null)
     | ({
         relationTo: 'media';
-        value: string | Media;
+        value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'sources';
+        value: number | Source;
+      } | null)
+    | ({
+        relationTo: 'sponsors';
+        value: number | Sponsor;
+      } | null)
+    | ({
+        relationTo: 'topics';
+        value: number | Topic;
+      } | null)
+    | ({
+        relationTo: 'tags';
+        value: number | Tag;
+      } | null)
+    | ({
+        relationTo: 'occupations';
+        value: number | Occupation;
+      } | null)
+    | ({
+        relationTo: 'places';
+        value: number | Place;
+      } | null)
+    | ({
+        relationTo: 'people';
+        value: number | Person;
+      } | null)
+    | ({
+        relationTo: 'stories';
+        value: number | Story;
+      } | null)
+    | ({
+        relationTo: 'articles';
+        value: number | Article;
+      } | null)
+    | ({
+        relationTo: 'expert-essays';
+        value: number | ExpertEssay;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'contributor-applications';
+        value: number | ContributorApplication;
+      } | null)
+    | ({
+        relationTo: 'ai-jobs';
+        value: number | AiJob;
+      } | null)
+    | ({
+        relationTo: 'social-accounts';
+        value: number | SocialAccount;
+      } | null)
+    | ({
+        relationTo: 'social-posts';
+        value: number | SocialPost;
+      } | null)
+    | ({
+        relationTo: 'audit-logs';
+        value: number | AuditLog;
       } | null);
   globalSlug?: string | null;
   user: {
     relationTo: 'users';
-    value: string | User;
+    value: number | User;
   };
   updatedAt: string;
   createdAt: string;
@@ -206,10 +1898,10 @@ export interface PayloadLockedDocument {
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: string;
+  id: number;
   user: {
     relationTo: 'users';
-    value: string | User;
+    value: number | User;
   };
   key?: string | null;
   value?:
@@ -229,7 +1921,7 @@ export interface PayloadPreference {
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: string;
+  id: number;
   name?: string | null;
   batch?: number | null;
   updatedAt: string;
@@ -240,6 +1932,22 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  name?: T;
+  role?: T;
+  requestedPublicRole?: T;
+  publicContributorProfile?:
+    | T
+    | {
+        approvedContributor?: T;
+        publicProfileEnabled?: T;
+        biography?: T;
+        expertise?: T;
+        affiliation?: T;
+        websiteOrSocial?: T;
+      };
+  assignedTopics?: T;
+  active?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -262,7 +1970,23 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
-  alt?: T;
+  title?: T;
+  mediaKind?: T;
+  altText?: T;
+  caption?: T;
+  creditLine?: T;
+  rightsStatus?: T;
+  licenseName?: T;
+  licenseUrl?: T;
+  sourceUrl?: T;
+  expiryDate?: T;
+  usageRestrictions?: T;
+  publicDeliveryAllowed?: T;
+  requiresWatermark?: T;
+  watermarkApplied?: T;
+  watermarkedFileNote?: T;
+  aiDisclosure?: T;
+  workflowStatus?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -274,6 +1998,801 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+  sizes?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        public?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sources_select".
+ */
+export interface SourcesSelect<T extends boolean = true> {
+  sourceType?: T;
+  title?: T;
+  shortCitation?: T;
+  fullCitation?: T;
+  authors?:
+    | T
+    | {
+        name?: T;
+        id?: T;
+      };
+  publication?: T;
+  publisher?: T;
+  publicationDateText?: T;
+  publicationDate?: T;
+  pages?: T;
+  url?: T;
+  archiveUrl?: T;
+  accessedDate?: T;
+  mediaType?: T;
+  interviewDetails?:
+    | T
+    | {
+        interviewee?: T;
+        interviewer?: T;
+        location?: T;
+        mediaType?: T;
+      };
+  archivalDetails?:
+    | T
+    | {
+        institution?: T;
+        collectionName?: T;
+        boxOrFolder?: T;
+      };
+  rightsStatus?: T;
+  rightsNotes?: T;
+  reliabilityNotes?: T;
+  attachedFile?: T;
+  relatedPeople?: T;
+  relatedTopics?: T;
+  workflowStatus?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sponsors_select".
+ */
+export interface SponsorsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  sponsorType?: T;
+  summary?: T;
+  websiteUrl?: T;
+  logo?: T;
+  sponsoredPeople?: T;
+  sponsoredStories?: T;
+  sponsoredArticles?: T;
+  sponsoredEssays?: T;
+  sponsoredPages?: T;
+  publicCreditLine?: T;
+  editorApproved?: T;
+  editorApprovedBy?: T;
+  editorApprovedAt?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        canonicalUrl?: T;
+      };
+  workflowStatus?: T;
+  editorialNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "topics_select".
+ */
+export interface TopicsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  parentTopic?: T;
+  featuredImage?: T;
+  relatedTopics?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        canonicalUrl?: T;
+      };
+  workflowStatus?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags_select".
+ */
+export interface TagsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  tagType?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "occupations_select".
+ */
+export interface OccupationsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "places_select".
+ */
+export interface PlacesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  placeType?: T;
+  coordinates?:
+    | T
+    | {
+        latitude?: T;
+        longitude?: T;
+      };
+  description?: T;
+  relatedSources?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "people_select".
+ */
+export interface PeopleSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  displayTitle?: T;
+  personType?: T;
+  aliases?:
+    | T
+    | {
+        alias?: T;
+        id?: T;
+      };
+  honorificName?: T;
+  eraLabel?: T;
+  scholarlyTradition?: T;
+  primaryWorks?: T;
+  birthDateText?: T;
+  birthDate?: T;
+  deathDateText?: T;
+  deathDate?: T;
+  birthPlace?: T;
+  nationality?: T;
+  occupations?: T;
+  shortBio?: T;
+  fullBio?: T;
+  portrait?: T;
+  portraitCreditOverride?: T;
+  youtubeEmbedId?: T;
+  externalVideoUrl?: T;
+  externalVideoSource?: T;
+  externalVideoNote?: T;
+  relatedTopics?: T;
+  tags?: T;
+  relatedPeople?: T;
+  relatedPlaces?: T;
+  timelineEvents?:
+    | T
+    | {
+        dateLabel?: T;
+        title?: T;
+        description?: T;
+        sources?: T;
+        id?: T;
+      };
+  sources?: T;
+  sponsorship?:
+    | T
+    | {
+        primarySponsor?: T;
+        additionalSponsors?: T;
+        publicCreditLine?: T;
+        showSponsorCredit?: T;
+      };
+  editorApproved?: T;
+  editorApprovedBy?: T;
+  editorApprovedAt?: T;
+  rightsCleared?: T;
+  rightsClearedBy?: T;
+  rightsClearedAt?: T;
+  rightsNotes?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        canonicalUrl?: T;
+      };
+  workflowStatus?: T;
+  editorialNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stories_select".
+ */
+export interface StoriesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  subtitle?: T;
+  format?: T;
+  primaryPerson?: T;
+  relatedPeople?: T;
+  relatedArticles?: T;
+  storyOrder?: T;
+  summary?: T;
+  body?: T;
+  videoAsset?: T;
+  youtubeEmbedId?: T;
+  externalVideoUrl?: T;
+  externalVideoSource?: T;
+  externalVideoNote?: T;
+  audioAsset?: T;
+  documentAssets?: T;
+  thumbnail?: T;
+  durationSeconds?: T;
+  transcript?: T;
+  transcriptSegments?:
+    | T
+    | {
+        startSeconds?: T;
+        endSeconds?: T;
+        speaker?: T;
+        text?: T;
+        id?: T;
+      };
+  themes?: T;
+  tags?: T;
+  placesMentioned?: T;
+  sources?: T;
+  sponsorship?:
+    | T
+    | {
+        primarySponsor?: T;
+        additionalSponsors?: T;
+        publicCreditLine?: T;
+        showSponsorCredit?: T;
+      };
+  credits?: T;
+  aiDisclosure?: T;
+  publicAiLabel?: T;
+  rightsStatus?: T;
+  editorApproved?: T;
+  editorApprovedBy?: T;
+  editorApprovedAt?: T;
+  rightsCleared?: T;
+  rightsClearedBy?: T;
+  rightsClearedAt?: T;
+  rightsNotes?: T;
+  metrics?:
+    | T
+    | {
+        viewCount?: T;
+        shareCount?: T;
+      };
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        canonicalUrl?: T;
+      };
+  workflowStatus?: T;
+  editorialNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "articles_select".
+ */
+export interface ArticlesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  articleType?: T;
+  leadSummary?: T;
+  infobox?:
+    | T
+    | {
+        label?: T;
+        value?: T;
+        id?: T;
+      };
+  tableOfContentsEnabled?: T;
+  sections?:
+    | T
+    | {
+        heading?: T;
+        body?: T;
+        sectionSources?: T;
+        id?: T;
+      };
+  contentBlocks?:
+    | T
+    | {
+        hero?:
+          | T
+          | {
+              kicker?: T;
+              heading?: T;
+              body?: T;
+              image?: T;
+              primaryLinkLabel?: T;
+              primaryLinkUrl?: T;
+              id?: T;
+              blockName?: T;
+            };
+        richText?:
+          | T
+          | {
+              body?: T;
+              id?: T;
+              blockName?: T;
+            };
+        featuredPeople?:
+          | T
+          | {
+              heading?: T;
+              people?: T;
+              id?: T;
+              blockName?: T;
+            };
+        featuredStories?:
+          | T
+          | {
+              heading?: T;
+              stories?: T;
+              id?: T;
+              blockName?: T;
+            };
+        featuredArticles?:
+          | T
+          | {
+              heading?: T;
+              articles?: T;
+              id?: T;
+              blockName?: T;
+            };
+        timeline?:
+          | T
+          | {
+              heading?: T;
+              events?:
+                | T
+                | {
+                    dateLabel?: T;
+                    title?: T;
+                    description?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        quote?:
+          | T
+          | {
+              quote?: T;
+              attribution?: T;
+              source?: T;
+              id?: T;
+              blockName?: T;
+            };
+        sourceTable?:
+          | T
+          | {
+              heading?: T;
+              sources?: T;
+              id?: T;
+              blockName?: T;
+            };
+        mediaGallery?:
+          | T
+          | {
+              heading?: T;
+              media?: T;
+              id?: T;
+              blockName?: T;
+            };
+        relatedContent?:
+          | T
+          | {
+              heading?: T;
+              people?: T;
+              stories?: T;
+              articles?: T;
+              id?: T;
+              blockName?: T;
+            };
+      };
+  relatedPeople?: T;
+  relatedStories?: T;
+  relatedTopics?: T;
+  relatedPlaces?: T;
+  sources?: T;
+  sponsorship?:
+    | T
+    | {
+        primarySponsor?: T;
+        additionalSponsors?: T;
+        publicCreditLine?: T;
+        showSponsorCredit?: T;
+      };
+  lastReviewedAt?: T;
+  reviewedBy?: T;
+  expertReviewedBy?: T;
+  revisionSummary?: T;
+  editorApproved?: T;
+  editorApprovedBy?: T;
+  editorApprovedAt?: T;
+  rightsCleared?: T;
+  rightsClearedBy?: T;
+  rightsClearedAt?: T;
+  rightsNotes?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        canonicalUrl?: T;
+      };
+  workflowStatus?: T;
+  editorialNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "expert-essays_select".
+ */
+export interface ExpertEssaysSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  expert?: T;
+  expertTitle?: T;
+  requiredCreditLine?: T;
+  authorDashboard?:
+    | T
+    | {
+        sourceDocument?: T;
+        submissionSource?: T;
+        submissionReceivedAt?: T;
+        extractedText?: T;
+        editableDraft?: T;
+        submissionStatus?: T;
+      };
+  body?: T;
+  pullQuotes?:
+    | T
+    | {
+        quote?: T;
+        id?: T;
+      };
+  sources?: T;
+  relatedPeople?: T;
+  relatedStories?: T;
+  relatedArticles?: T;
+  relatedTopics?: T;
+  sponsorship?:
+    | T
+    | {
+        primarySponsor?: T;
+        additionalSponsors?: T;
+        publicCreditLine?: T;
+        showSponsorCredit?: T;
+      };
+  rightsStatus?: T;
+  editorApproved?: T;
+  editorApprovedBy?: T;
+  editorApprovedAt?: T;
+  rightsCleared?: T;
+  rightsClearedBy?: T;
+  rightsClearedAt?: T;
+  rightsNotes?: T;
+  expertApproved?: T;
+  expertApprovedAt?: T;
+  expertApprovedByEditor?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        canonicalUrl?: T;
+      };
+  workflowStatus?: T;
+  editorialNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages_select".
+ */
+export interface PagesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  pagePurpose?: T;
+  layoutBlocks?:
+    | T
+    | {
+        hero?:
+          | T
+          | {
+              kicker?: T;
+              heading?: T;
+              body?: T;
+              image?: T;
+              primaryLinkLabel?: T;
+              primaryLinkUrl?: T;
+              id?: T;
+              blockName?: T;
+            };
+        richText?:
+          | T
+          | {
+              body?: T;
+              id?: T;
+              blockName?: T;
+            };
+        featuredPeople?:
+          | T
+          | {
+              heading?: T;
+              people?: T;
+              id?: T;
+              blockName?: T;
+            };
+        featuredStories?:
+          | T
+          | {
+              heading?: T;
+              stories?: T;
+              id?: T;
+              blockName?: T;
+            };
+        featuredArticles?:
+          | T
+          | {
+              heading?: T;
+              articles?: T;
+              id?: T;
+              blockName?: T;
+            };
+        timeline?:
+          | T
+          | {
+              heading?: T;
+              events?:
+                | T
+                | {
+                    dateLabel?: T;
+                    title?: T;
+                    description?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        quote?:
+          | T
+          | {
+              quote?: T;
+              attribution?: T;
+              source?: T;
+              id?: T;
+              blockName?: T;
+            };
+        sourceTable?:
+          | T
+          | {
+              heading?: T;
+              sources?: T;
+              id?: T;
+              blockName?: T;
+            };
+        mediaGallery?:
+          | T
+          | {
+              heading?: T;
+              media?: T;
+              id?: T;
+              blockName?: T;
+            };
+        relatedContent?:
+          | T
+          | {
+              heading?: T;
+              people?: T;
+              stories?: T;
+              articles?: T;
+              id?: T;
+              blockName?: T;
+            };
+      };
+  sponsorship?:
+    | T
+    | {
+        primarySponsor?: T;
+        additionalSponsors?: T;
+        publicCreditLine?: T;
+        showSponsorCredit?: T;
+      };
+  editorApproved?: T;
+  editorApprovedBy?: T;
+  editorApprovedAt?: T;
+  rightsCleared?: T;
+  rightsClearedBy?: T;
+  rightsClearedAt?: T;
+  rightsNotes?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        canonicalUrl?: T;
+      };
+  workflowStatus?: T;
+  editorialNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contributor-applications_select".
+ */
+export interface ContributorApplicationsSelect<T extends boolean = true> {
+  name?: T;
+  email?: T;
+  requestedRole?: T;
+  biography?: T;
+  expertise?: T;
+  affiliation?: T;
+  websiteOrSocial?: T;
+  proposedTopic?: T;
+  articleSummary?: T;
+  sourceOwnership?: T;
+  createdUser?: T;
+  status?: T;
+  internalNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-jobs_select".
+ */
+export interface AiJobsSelect<T extends boolean = true> {
+  jobType?: T;
+  inputCollection?: T;
+  inputDocumentId?: T;
+  promptSummary?: T;
+  outputDraft?: T;
+  provider?: T;
+  model?: T;
+  status?: T;
+  reviewedBy?: T;
+  reviewedAt?: T;
+  costEstimate?: T;
+  errorLog?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "social-accounts_select".
+ */
+export interface SocialAccountsSelect<T extends boolean = true> {
+  platform?: T;
+  displayName?: T;
+  connectedEntityType?: T;
+  externalAccountId?: T;
+  tokenReference?: T;
+  tokenExpiresAt?: T;
+  connectedBy?: T;
+  active?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "social-posts_select".
+ */
+export interface SocialPostsSelect<T extends boolean = true> {
+  title?: T;
+  sourceContentType?: T;
+  sourceStory?: T;
+  sourceArticle?: T;
+  sourcePerson?: T;
+  platformVariants?:
+    | T
+    | {
+        platform?: T;
+        postText?: T;
+        media?: T;
+        link?: T;
+        hashtags?: T;
+        id?: T;
+      };
+  targetAccounts?: T;
+  approvalStatus?: T;
+  scheduledFor?: T;
+  approvedBy?: T;
+  publishedAt?: T;
+  remotePostIds?: T;
+  errorLog?: T;
+  analyticsSnapshot?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "audit-logs_select".
+ */
+export interface AuditLogsSelect<T extends boolean = true> {
+  action?: T;
+  collectionSlug?: T;
+  documentId?: T;
+  documentTitle?: T;
+  changedBy?: T;
+  changedByEmail?: T;
+  changedAt?: T;
+  publishedBy?: T;
+  publishedAt?: T;
+  summary?: T;
+  changedFields?:
+    | T
+    | {
+        field?: T;
+        beforeValue?: T;
+        afterValue?: T;
+        id?: T;
+      };
+  beforeSnapshot?: T;
+  afterSnapshot?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

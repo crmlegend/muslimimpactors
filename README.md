@@ -1,67 +1,96 @@
-# Payload Blank Template
+# Muslim Impactors
 
-This template comes configured with the bare minimum to get started on anything you need.
+Working-title prototype for a research-based public archive of Muslim public service, humanitarian contribution, civic life, scholarship, culture, sources, expert essays, media, and story-led historical context.
 
-## Quick start
+The app is scaffolded with Next.js and Payload CMS. Local development defaults to SQLite so the admin workspace can run immediately without Docker; Postgres remains supported by changing `DATABASE_URL`. Public visitors can register interest, submit contributor applications, and ask the local archive assistant, while internal users manage public personalities, stories, wiki-style articles, sources, sponsors, media rights, expert essays, page-builder pages, AI jobs, and LinkedIn/X social-post drafts.
 
-This template can be deployed directly from our Cloud hosting and it will setup MongoDB and cloud S3 object storage for media.
+Preferred launch subdomain: `https://muslimimpactors.americanmotivations.com`.
 
-## Quick Start - local setup
+## Local Setup
 
-To spin up this template locally, follow these steps:
+1. Start the app:
 
-### Clone
+```bash
+npm run dev
+```
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+2. Open:
 
-### Development
+- Public site: `http://localhost:3000`
+- CMS admin: `http://localhost:3000/admin`
 
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URL` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
+On the first admin visit, Payload will ask you to create the first user. Give that user the `Super Admin` role after creation.
 
-3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
+## Current Architecture
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+- Framework: Next.js App Router.
+- CMS: Payload CMS.
+- Database: SQLite locally, Postgres/Supabase-ready through `@payloadcms/db-postgres`.
+- Optional local Postgres: `pgvector/pgvector:pg16` Docker image is configured for machines with Docker.
+- Public launch model: read-first MVP with contributor signup and reviewed submissions.
+- Public homepage: Muslim impact archive with an American Muslim launch dataset by default.
+- Search UX: interactive top search preview with grouped results.
+- Public routes: `/stories`, `/stories/[slug]`, `/articles`, `/articles/[slug]`, `/personalities`, `/personalities/[slug]`, `/muslims-in-history`, `/contributors`, `/sponsors`, `/themes`, `/timelines`, `/sources`, `/blog`, `/ask`, `/search`, and `/workflow`.
+- Internal social publishing: LinkedIn and X draft/schedule records.
+- Expert essay workflow: editor uploads Word/PDF, edits draft, checks Expert Approved, previews supported public routes, then rights and publisher gates apply.
 
-#### Docker (Optional)
+## Useful Commands
 
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
+```bash
+npm run db:up
+npm run db:down
+npm run dev
+npm run lint
+npm run generate:types
+npm run build
+```
 
-To do so, follow these steps:
+## Important Environment Variables
 
-- Modify the `MONGODB_URL` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URL` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
+```bash
+DATABASE_URL=file:./payload.db
+PAYLOAD_SECRET=replace-with-a-long-secret
+NEXT_PUBLIC_SITE_URL=https://muslimimpactors.americanmotivations.com
+```
 
-## How it works
+## Implemented Collections
 
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+- Users
+- Media
+- Sources
+- Topics
+- Tags
+- Occupations
+- Places
+- Public Personalities
+- Stories
+- Articles
+- Expert Essays
+- Pages
+- AI Jobs
+- Contributor Applications
+- Sponsors
+- Social Accounts
+- Social Posts
 
-### Collections
+## How To Test The Prototype
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
+1. Visit `http://localhost:3000`.
+2. Type `Ali`, `American`, `service`, or `medicine` into the top search box and confirm the mega menu groups results by personality, theme, story, source, article, essay, blog, and contributor.
+3. Use the top menu to open `Personalities`, `Muslims in History`, `Themes`, `Timelines`, `Blog`, `AI Ask`, and `Help`. Use the footer for `Stories`, `Articles`, contributors, sponsors, sources, and submission process pages.
+4. On the homepage, hover the portrait grid, click `Open transcript`, and click `Save to research list`.
+5. Open `/ask`, ask a free-form question, and confirm the assistant returns cited archive records with a five-question browser limit.
+6. Open `/workflow`, submit the contributor signup form, and confirm the application appears in the admin Contributor Applications collection.
+7. Click `Admin`, create or sign in as a Super Admin, then create test records in Public Personalities, Sources, Sponsors, Media, Stories, Articles, and Expert Essays.
+8. In Expert Essays, use the editor upload/draft fields to attach a Word/PDF submission, paste or extract text into the editable draft, and check `Expert Approved` when the expert-approved version is ready.
+9. Use the Preview button on People, Stories, Articles, Pages, and Expert Essays to inspect the public route before publishing.
+10. Try publishing as a non-publisher role and then as a Publisher/Admin role to verify the approval gate behavior.
 
-- #### Users (Authentication)
+## Next Build Steps
 
-  Users are auth-enabled collections that have access to the admin panel.
-
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/3.x/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
-
-- #### Media
-
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
-
-### Docker
-
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
-
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
-
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
-
-## Questions
-
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+- Connect the search mega menu to Payload data across all published records.
+- Replace local prototype data with Payload-backed directory/detail pages.
+- Add media watermark background job.
+- Add document extraction for expert essay uploads.
+- Add pgvector embedding table and AI Q&A route.
+- Add real LinkedIn/X OAuth and posting provider.

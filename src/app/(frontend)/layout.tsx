@@ -1,18 +1,21 @@
 import React from 'react'
 import './styles.css'
+import ArchiveFooter from './ArchiveFooter'
 
 export const metadata = {
-  description: 'A blank template using Payload in a Next.js app.',
-  title: 'Payload Blank Template',
+  description:
+    'A research-based public archive for Muslim public service, humanitarian contribution, civic life, scholarship, culture, and historical intellectual context.',
+  title: 'Muslim Impactors',
 }
 
 export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props
 
   return (
-    <html lang="en">
+    <html data-scroll-behavior="smooth" lang="en">
       <body>
-        <main>{children}</main>
+        {children}
+        <ArchiveFooter />
       </body>
     </html>
   )
