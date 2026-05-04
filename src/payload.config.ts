@@ -35,10 +35,19 @@ const sqliteDatabaseExists = sqliteFilePath ? existsSync(sqliteFilePath) : false
 const shouldPushSQLiteSchema =
   process.env.PAYLOAD_SQLITE_PUSH === 'true' || !sqliteDatabaseExists
 const shouldPushPostgresSchema = process.env.PAYLOAD_POSTGRES_PUSH === 'true'
+const shouldUsePostgresSSL =
+  process.env.DATABASE_SSL === 'true' || databaseURL.includes('supabase.com')
 const dbAdapter = databaseURL.startsWith('postgres')
   ? postgresAdapter({
       pool: {
         connectionString: databaseURL,
+        ...(shouldUsePostgresSSL
+          ? {
+              ssl: {
+                rejectUnauthorized: false,
+              },
+            }
+          : {}),
       },
       push: shouldPushPostgresSchema,
     })
