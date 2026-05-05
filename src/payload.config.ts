@@ -1,3 +1,5 @@
+import { postgresAdapter } from '@payloadcms/db-postgres'
+import { sqliteAdapter } from '@payloadcms/db-sqlite'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { existsSync } from 'node:fs'
 import path from 'path'
@@ -36,7 +38,7 @@ const shouldPushPostgresSchema = process.env.PAYLOAD_POSTGRES_PUSH === 'true'
 const shouldUsePostgresSSL =
   process.env.DATABASE_SSL === 'true' || databaseURL.includes('supabase.com')
 const dbAdapter = databaseURL.startsWith('postgres')
-  ? (await import('@payloadcms/db-postgres')).postgresAdapter({
+  ? postgresAdapter({
       pool: {
         connectionString: databaseURL,
         ...(shouldUsePostgresSSL
@@ -49,7 +51,7 @@ const dbAdapter = databaseURL.startsWith('postgres')
       },
       push: shouldPushPostgresSchema,
     })
-  : (await import('@payloadcms/db-sqlite')).sqliteAdapter({
+  : sqliteAdapter({
       client: {
         url: databaseURL,
       },
