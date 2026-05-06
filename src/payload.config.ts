@@ -30,6 +30,14 @@ import { withAudit } from './collections/auditHooks'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 const databaseURL = process.env.DATABASE_URL || 'file:./payload.db'
+const siteURL = (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
+const allowedOrigins = [
+  siteURL,
+  'https://muslimimpactors.americanmotivations.com',
+  'https://muslimimpactors-production.up.railway.app',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+].filter((origin, index, origins) => Boolean(origin) && origins.indexOf(origin) === index)
 const sqliteFilePath = databaseURL.startsWith('file:') ? databaseURL.replace(/^file:/, '') : ''
 const sqliteDatabaseExists = sqliteFilePath ? existsSync(sqliteFilePath) : false
 const shouldPushSQLiteSchema =
@@ -65,6 +73,8 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
+  cors: allowedOrigins,
+  csrf: allowedOrigins,
   collections: [
     withAudit(Users, 'email'),
     withAudit(Media, 'filename'),
@@ -87,6 +97,7 @@ export default buildConfig({
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
+  serverURL: siteURL,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
