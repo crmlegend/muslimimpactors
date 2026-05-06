@@ -6,7 +6,6 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 import { getPayload } from 'payload'
-import sharp from 'sharp'
 
 process.env.PAYLOAD_MIGRATING = 'true'
 
@@ -206,6 +205,7 @@ const createMediaIfMissing = async ({
 }
 
 const createSeedMediaFiles = async () => {
+  const sharp = (await import('sharp')).default
   const seedDir = path.join(os.tmpdir(), 'epoch-archive-seed-media')
   await mkdir(seedDir, { recursive: true })
 
@@ -305,10 +305,11 @@ const placeSlugForRegion = (region: string) => {
   return 'wider-islamic-world'
 }
 
-export const seedArchive = async () => {
+export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
+  const includeMedia = options.includeMedia ?? true
   const { default: config } = await import('../payload.config')
   const payload = await getPayload({ config })
-  const seedMediaFiles = await createSeedMediaFiles()
+  const seedMediaFiles = includeMedia ? await createSeedMediaFiles() : null
   const api = payload as never as {
     find: (args: Record<string, unknown>) => Promise<{ docs: Array<Record<string, unknown> & SeedDoc> }>
     update: (args: Record<string, unknown>) => Promise<SeedDoc>
@@ -453,7 +454,8 @@ export const seedArchive = async () => {
 
   userIds.set('sample_public_author_application', contributorApplication.id)
 
-  const mediaRecords = [
+  const mediaRecords = seedMediaFiles
+    ? [
     {
       data: {
         altText: 'Seed manuscript media panel for public archive testing.',
@@ -519,7 +521,8 @@ export const seedArchive = async () => {
       filePath: seedMediaFiles.expertPdf,
       key: 'expertPdf',
     },
-  ]
+      ]
+    : []
 
   for (const media of mediaRecords) {
     const record = await createMediaIfMissing({

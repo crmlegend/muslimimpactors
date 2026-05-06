@@ -23,6 +23,21 @@ const isAuthorized = (request: Request) => {
   return process.env.ALLOW_ARCHIVE_BOOTSTRAP === 'true' || authorization === expectedBearer
 }
 
+const getErrorDetails = (error: unknown) => {
+  if (!(error instanceof Error)) {
+    return {
+      message: String(error),
+      name: 'UnknownError',
+    }
+  }
+
+  return {
+    message: error.message,
+    name: error.name,
+    stack: error.stack?.split('\n').slice(0, 8).join('\n'),
+  }
+}
+
 const getCounts = async () => {
   const { default: config } = await import('@payload-config')
   const payload = await getPayload({ config })
@@ -42,51 +57,63 @@ const getCounts = async () => {
 }
 
 const runBootstrap = async (request: Request) => {
-  const url = new URL(request.url)
+  try {
+    const url = new URL(request.url)
 
-  if (url.searchParams.get('confirm') !== 'seed') {
-    return Response.json(
-      {
-        message: 'Seed bootstrap requires ?confirm=seed.',
-        ok: false,
-      },
-      { status: 400 },
-    )
-  }
+    if (url.searchParams.get('confirm') !== 'seed') {
+      return Response.json(
+        {
+          message: 'Seed bootstrap requires ?confirm=seed.',
+          ok: false,
+        },
+        { status: 400 },
+      )
+    }
 
-  if (!isAuthorized(request)) {
-    return Response.json(
-      {
-        message:
-          'Bootstrap is disabled. Temporarily set ALLOW_ARCHIVE_BOOTSTRAP=true in Railway, redeploy, seed once, then remove it.',
-        ok: false,
-      },
-      { status: 403 },
-    )
-  }
+    if (!isAuthorized(request)) {
+      return Response.json(
+        {
+          message:
+            'Bootstrap is disabled. Temporarily set ALLOW_ARCHIVE_BOOTSTRAP=true in Railway, redeploy, seed once, then remove it.',
+          ok: false,
+        },
+        { status: 403 },
+      )
+    }
 
-  const before = await getCounts()
+    const before = await getCounts()
 
-  if (before.people > 0 || before.stories > 0 || before.articles > 0) {
+    if (before.people > 0 || before.stories > 0 || before.articles > 0) {
+      return Response.json({
+        before,
+        message: 'Seed skipped because archive content already exists.',
+        ok: true,
+        skipped: true,
+      })
+    }
+
+    const { seedArchive } = await import('../../scripts/seedArchive')
+
+    await seedArchive({ includeMedia: false })
+
     return Response.json({
+      after: await getCounts(),
       before,
-      message: 'Seed skipped because archive content already exists.',
+      mediaMode: 'skipped',
+      message: 'Archive seed complete.',
       ok: true,
-      skipped: true,
+      skipped: false,
     })
+  } catch (error) {
+    return Response.json(
+      {
+        error: getErrorDetails(error),
+        message: 'Archive seed failed before completion.',
+        ok: false,
+      },
+      { status: 500 },
+    )
   }
-
-  const { seedArchive } = await import('../../scripts/seedArchive')
-
-  await seedArchive()
-
-  return Response.json({
-    after: await getCounts(),
-    before,
-    message: 'Archive seed complete.',
-    ok: true,
-    skipped: false,
-  })
 }
 
 export const GET = runBootstrap
