@@ -8,6 +8,7 @@ import { searchGroups, searchItems } from './archiveData'
 
 export default function ArchiveHeader() {
   const [helpOpen, setHelpOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
 
@@ -25,15 +26,26 @@ export default function ArchiveHeader() {
   }, [query])
 
   return (
-    <header className="archive-header">
-      <div className="brand-stack">
-        <Link className="wordmark" href="/">
-          Muslim Impactors
-        </Link>
-        <span>Research Archive and Contributor Network</span>
+    <header className={`archive-header ${mobileMenuOpen ? 'menu-open' : ''}`}>
+      <div className="header-top-row">
+        <div className="brand-stack">
+          <Link className="wordmark" href="/">
+            Muslim Impactors
+          </Link>
+          <span>Research Archive and Contributor Network</span>
+        </div>
+        <button
+          aria-controls="archive-primary-nav"
+          aria-expanded={mobileMenuOpen}
+          className="mobile-menu-toggle"
+          onClick={() => setMobileMenuOpen((value) => !value)}
+          type="button"
+        >
+          Menu
+        </button>
       </div>
 
-      <nav className="utility-nav" aria-label="Primary navigation">
+      <nav className="utility-nav" aria-label="Primary navigation" id="archive-primary-nav">
         <Link href="/personalities">Personalities</Link>
         <Link href="/muslims-in-history">Muslims in History</Link>
         <Link href="/themes">Themes</Link>
