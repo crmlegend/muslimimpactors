@@ -26,6 +26,7 @@ import { Stories } from './collections/Stories'
 import { Tags } from './collections/Tags'
 import { Topics } from './collections/Topics'
 import { withAudit } from './collections/auditHooks'
+import { migrations } from './migrations'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -57,6 +58,7 @@ const dbAdapter = databaseURL.startsWith('postgres')
             }
           : {}),
       },
+      prodMigrations: migrations,
       push: shouldPushPostgresSchema,
     })
   : sqliteAdapter({
