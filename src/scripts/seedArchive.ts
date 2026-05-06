@@ -3,6 +3,7 @@ import 'dotenv/config'
 import { mkdir, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 import { getPayload } from 'payload'
 import sharp from 'sharp'
@@ -304,7 +305,7 @@ const placeSlugForRegion = (region: string) => {
   return 'wider-islamic-world'
 }
 
-const seed = async () => {
+export const seedArchive = async () => {
   const { default: config } = await import('../payload.config')
   const payload = await getPayload({ config })
   const seedMediaFiles = await createSeedMediaFiles()
@@ -1211,5 +1212,10 @@ const seed = async () => {
   )
 }
 
-await seed()
-process.exit(0)
+const isDirectRun =
+  Boolean(process.argv[1]) && import.meta.url === pathToFileURL(process.argv[1] || '').href
+
+if (isDirectRun) {
+  await seedArchive()
+  process.exit(0)
+}
