@@ -2921,13 +2921,36 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
- * Controls reviewer-facing homepage selections, sponsor placements, and global brand colors.
+ * Edit homepage featured records, hero rail wording, sponsor placements, and global brand colors.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings".
  */
 export interface SiteSetting {
   id: number;
+  /**
+   * Editable public homepage wording for the left history rail and right sponsor rail.
+   */
+  homepageCopy?: {
+    /**
+     * Small label above the left column heading.
+     */
+    leftRailEyebrow?: string | null;
+    /**
+     * Main heading for the left column.
+     */
+    leftRailHeading?: string | null;
+    leftRailBody?: string | null;
+    leftRailButtonLabel?: string | null;
+    /**
+     * Small label above the sponsor column heading.
+     */
+    rightRailEyebrow?: string | null;
+    rightRailHeading?: string | null;
+  };
+  /**
+   * Controls the daily/manual featured personality, editor selections, recommended videos, and sponsor ad ordering.
+   */
   homepage?: {
     /**
      * Default personality shown in the homepage focus area when no scheduled override is active.
@@ -2966,6 +2989,9 @@ export interface SiteSetting {
         }[]
       | null;
   };
+  /**
+   * Reviewer-approved default colors. Super admins/admins can update these values without code changes.
+   */
   branding?: {
     /**
      * Use a hex color value. Example: #0D76BC.
@@ -2996,6 +3022,16 @@ export interface SiteSetting {
  * via the `definition` "site-settings_select".
  */
 export interface SiteSettingsSelect<T extends boolean = true> {
+  homepageCopy?:
+    | T
+    | {
+        leftRailEyebrow?: T;
+        leftRailHeading?: T;
+        leftRailBody?: T;
+        leftRailButtonLabel?: T;
+        rightRailEyebrow?: T;
+        rightRailHeading?: T;
+      };
   homepage?:
     | T
     | {

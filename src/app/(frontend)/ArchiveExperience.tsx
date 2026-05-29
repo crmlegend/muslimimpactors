@@ -26,6 +26,14 @@ type ArchiveExperienceSettings = {
     secondaryColor?: string
     tertiaryColor?: string
   }
+  homepageCopy?: {
+    leftRailBody?: string
+    leftRailButtonLabel?: string
+    leftRailEyebrow?: string
+    leftRailHeading?: string
+    rightRailEyebrow?: string
+    rightRailHeading?: string
+  }
   editorChoiceSlugs?: string[]
   featuredPersonalitySource?: 'daily' | 'manual'
   featuredPersonalitySlug?: string
@@ -137,6 +145,16 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
     '--brand-secondary': settings?.brandColors?.secondaryColor || '#F2673C',
     '--brand-tertiary': settings?.brandColors?.tertiaryColor || '#DF5A32',
   } as React.CSSProperties
+  const homepageCopy = {
+    leftRailBody:
+      settings?.homepageCopy?.leftRailBody ||
+      'A focused rail for scholars, institution builders, physicians, jurists, scientists, and artists who shaped the intellectual foundations behind the archive.',
+    leftRailButtonLabel: settings?.homepageCopy?.leftRailButtonLabel || 'Open Golden Age Index',
+    leftRailEyebrow: settings?.homepageCopy?.leftRailEyebrow || 'From The Golden Age',
+    leftRailHeading: settings?.homepageCopy?.leftRailHeading || 'Muslims in History',
+    rightRailEyebrow: settings?.homepageCopy?.rightRailEyebrow || 'Our Sponsors',
+    rightRailHeading: settings?.homepageCopy?.rightRailHeading || 'Project Sponsors',
+  }
   const selectedPerson = selectedPersonSlug
     ? popularPersonalities.find((person) => person.slug === selectedPersonSlug)
     : null
@@ -228,12 +246,9 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
       <main>
         <section className="review-home-grid" id="portrait-index">
           <aside className="golden-age-rail">
-            <span>Muslims in History</span>
-            <h2>Historical foundations</h2>
-            <p>
-              Earlier scholars, physicians, jurists, scientists, institution builders, and artists
-              preserved as context for today&apos;s civic and professional impact stories.
-            </p>
+            <span>{homepageCopy.leftRailEyebrow}</span>
+            <h2>{homepageCopy.leftRailHeading}</h2>
+            <p>{homepageCopy.leftRailBody}</p>
             <div>
               {goldenAgePeople.map((person) => (
                 <Link href={person.href} key={person.slug}>
@@ -243,7 +258,7 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
               ))}
             </div>
             <Link className="rail-link" href="/muslims-in-history">
-              Open historical index
+              {homepageCopy.leftRailButtonLabel}
             </Link>
           </aside>
 
@@ -308,8 +323,8 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
           </section>
 
           <aside className="sponsor-ad-rail" aria-label="Sponsor placements">
-            <span>Sponsor Network</span>
-            <h2>Project Sponsors</h2>
+            <span>{homepageCopy.rightRailEyebrow}</span>
+            <h2>{homepageCopy.rightRailHeading}</h2>
             <div>
               {sponsorAds.map((sponsor) => (
                 <Link

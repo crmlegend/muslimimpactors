@@ -17,6 +17,14 @@ type RawSiteSettings = {
     secondaryColor?: unknown
     tertiaryColor?: unknown
   }
+  homepageCopy?: {
+    leftRailBody?: unknown
+    leftRailButtonLabel?: unknown
+    leftRailEyebrow?: unknown
+    leftRailHeading?: unknown
+    rightRailEyebrow?: unknown
+    rightRailHeading?: unknown
+  }
   homepage?: {
     dailyFeaturedPersonality?: RelationshipValue
     editorsChoice?: RelationshipValue[]
@@ -87,6 +95,14 @@ const getHomepageSettings = async () => {
         primaryColor: asText(settings.branding?.primaryColor),
         secondaryColor: asText(settings.branding?.secondaryColor),
         tertiaryColor: asText(settings.branding?.tertiaryColor),
+      },
+      homepageCopy: {
+        leftRailBody: asText(settings.homepageCopy?.leftRailBody),
+        leftRailButtonLabel: asText(settings.homepageCopy?.leftRailButtonLabel),
+        leftRailEyebrow: asText(settings.homepageCopy?.leftRailEyebrow),
+        leftRailHeading: asText(settings.homepageCopy?.leftRailHeading),
+        rightRailEyebrow: asText(settings.homepageCopy?.rightRailEyebrow),
+        rightRailHeading: asText(settings.homepageCopy?.rightRailHeading),
       },
       editorChoiceSlugs: homepage.editorsChoice?.map(relationshipSlug).filter(isDefined),
       featuredPersonalitySource,

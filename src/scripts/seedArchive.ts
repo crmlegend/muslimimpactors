@@ -952,6 +952,15 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
         secondaryColor: '#F2673C',
         tertiaryColor: '#DF5A32',
       },
+      homepageCopy: {
+        leftRailBody:
+          'A focused rail for scholars, institution builders, physicians, jurists, scientists, and artists who shaped the intellectual foundations behind the archive.',
+        leftRailButtonLabel: 'Open Golden Age Index',
+        leftRailEyebrow: 'From The Golden Age',
+        leftRailHeading: 'Muslims in History',
+        rightRailEyebrow: 'Our Sponsors',
+        rightRailHeading: 'Project Sponsors',
+      },
       homepage: {
         dailyFeaturedPersonality: personIds.get('keith-ellison') || personIdList[0],
         editorsChoice: [

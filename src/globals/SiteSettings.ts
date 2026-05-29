@@ -19,13 +19,75 @@ export const SiteSettings: GlobalConfig = {
     update: isPublisher,
   },
   admin: {
+    group: 'Site Controls',
     description:
-      'Controls reviewer-facing homepage selections, sponsor placements, and global brand colors.',
+      'Edit homepage featured records, hero rail wording, sponsor placements, and global brand colors.',
   },
+  label: 'Homepage & Branding',
   fields: [
+    {
+      name: 'homepageCopy',
+      type: 'group',
+      admin: {
+        description:
+          'Editable public homepage wording for the left history rail and right sponsor rail.',
+      },
+      fields: [
+        {
+          name: 'leftRailEyebrow',
+          type: 'text',
+          defaultValue: 'From The Golden Age',
+          label: 'Left rail eyebrow',
+          admin: {
+            description: 'Small label above the left column heading.',
+          },
+        },
+        {
+          name: 'leftRailHeading',
+          type: 'text',
+          defaultValue: 'Muslims in History',
+          label: 'Left rail heading',
+          admin: {
+            description: 'Main heading for the left column.',
+          },
+        },
+        {
+          name: 'leftRailBody',
+          type: 'textarea',
+          defaultValue:
+            'A focused rail for scholars, institution builders, physicians, jurists, scientists, and artists who shaped the intellectual foundations behind the archive.',
+          label: 'Left rail body',
+        },
+        {
+          name: 'leftRailButtonLabel',
+          type: 'text',
+          defaultValue: 'Open Golden Age Index',
+          label: 'Left rail button label',
+        },
+        {
+          name: 'rightRailEyebrow',
+          type: 'text',
+          defaultValue: 'Our Sponsors',
+          label: 'Right rail eyebrow',
+          admin: {
+            description: 'Small label above the sponsor column heading.',
+          },
+        },
+        {
+          name: 'rightRailHeading',
+          type: 'text',
+          defaultValue: 'Project Sponsors',
+          label: 'Right rail heading',
+        },
+      ],
+    },
     {
       name: 'homepage',
       type: 'group',
+      admin: {
+        description:
+          'Controls the daily/manual featured personality, editor selections, recommended videos, and sponsor ad ordering.',
+      },
       fields: [
         {
           name: 'dailyFeaturedPersonality',
@@ -115,6 +177,10 @@ export const SiteSettings: GlobalConfig = {
     {
       name: 'branding',
       type: 'group',
+      admin: {
+        description:
+          'Reviewer-approved default colors. Super admins/admins can update these values without code changes.',
+      },
       fields: [
         colorField('primaryColor', 'Primary color', '#0D76BC'),
         colorField('secondaryColor', 'Secondary color', '#F2673C'),
