@@ -1941,10 +1941,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'audit-logs';
         value: number | AuditLog;
-      } | null)
-    | ({
-        relationTo: 'visitor-events';
-        value: number | VisitorEvent;
       } | null);
   globalSlug?: string | null;
   user: {

@@ -4,6 +4,7 @@ import { isPublisher, isSuperAdmin } from '@/access/roles'
 
 export const VisitorEvents: CollectionConfig = {
   slug: 'visitor-events',
+  lockDocuments: false,
   labels: {
     singular: 'Visitor Event',
     plural: 'Visitor Events',
