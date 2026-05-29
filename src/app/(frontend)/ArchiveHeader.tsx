@@ -32,7 +32,7 @@ export default function ArchiveHeader() {
           <Link className="wordmark" href="/">
             Muslim Impactors
           </Link>
-          <span>Research Archive and Contributor Network</span>
+          <span>Public Service Archive and Civic Impact Network</span>
         </div>
         <button
           aria-controls="archive-primary-nav"
@@ -48,8 +48,6 @@ export default function ArchiveHeader() {
       <nav className="utility-nav" aria-label="Primary navigation" id="archive-primary-nav">
         <Link href="/personalities">Personalities</Link>
         <Link href="/muslims-in-history">Muslims in History</Link>
-        <Link href="/themes">Themes</Link>
-        <Link href="/timelines">Timelines</Link>
         <Link href="/blog">Blog</Link>
         <Link href="/ask">AI Ask</Link>
         <button
@@ -113,7 +111,8 @@ export default function ArchiveHeader() {
             </div>
             <div className="mega-search-footer">
               <span>
-                Results include personalities, themes, stories, sources, and contributors.
+                Results include personalities, civic work, historical context, sources, and
+                contributors.
               </span>
               <Link href="/search">Open full search</Link>
             </div>

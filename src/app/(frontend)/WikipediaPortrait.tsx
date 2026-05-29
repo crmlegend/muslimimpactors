@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react'
 
+import { canFetchWikipediaSummary } from './archiveData'
+
 type WikipediaPortraitProps = {
   className?: string
   initials: string
@@ -20,6 +22,11 @@ export default function WikipediaPortrait({
   const [image, setImage] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!canFetchWikipediaSummary(wikipediaTitle)) {
+      setImage(null)
+      return
+    }
+
     const controller = new AbortController()
 
     const loadImage = async () => {

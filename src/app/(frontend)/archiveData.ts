@@ -11,6 +11,7 @@ export type Personality = {
   editorsPick: boolean
   era: string
   href: string
+  imageUrl?: string
   initials: string
   name: string
   popularity: number
@@ -54,25 +55,33 @@ export type YoutubeVideo = {
 }
 
 export type SponsorRow = {
+  adLabel?: string
+  bannerImage?: string
+  details?: {
+    body: string
+    heading: string
+  }[]
   focus: string
   href: string
   name: string
   slug: string
   summary: string
   type: string
+  websiteLabel?: string
+  websiteUrl?: string
 }
 
 export const manuscriptImage = '/manuscript-panel.svg'
 
 const tones = [
-  '#123c33',
-  '#253c59',
-  '#7b3f35',
-  '#6f5a28',
-  '#355e54',
-  '#4c5264',
-  '#8a5a44',
-  '#214b62',
+  '#0D76BC',
+  '#173653',
+  '#F2673C',
+  '#DF5A32',
+  '#4B8DC4',
+  '#5D6F7F',
+  '#C95135',
+  '#2C6F9E',
 ]
 
 const slugify = (value: string) =>
@@ -122,6 +131,58 @@ const wikipediaTitleOverrides: Record<string, string> = {
 
 const wikipediaTitleFor = (name: string) =>
   wikipediaTitleOverrides[name] || name.replace(/['’]/g, '').replace(/\s+/g, '_')
+
+const portraitImageOverrides: Record<string, string> = {
+  'Ahmed Kousay al-Taie':
+    'https://upload.wikimedia.org/wikipedia/commons/7/75/SgtAhmedKousayAltaie.png',
+  'André Carson':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Andr%C3%A9_Carson_116th_Congress_portrait.jpg/330px-Andr%C3%A9_Carson_116th_Congress_portrait.jpg',
+  'Aziz Sancar':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Aziz_Sancar_0060.jpg/330px-Aziz_Sancar_0060.jpg',
+  'Fareed Zakaria':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Fareed_Zakaria%2C_Peabody_Awards_%282012%29_%28cropped%29.jpg/330px-Fareed_Zakaria%2C_Peabody_Awards_%282012%29_%28cropped%29.jpg',
+  'Hamdi Ulukaya':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Hamdi_Ulukaya%2C_official_portrait%2C_Homeland_Security_Council.jpg/330px-Hamdi_Ulukaya%2C_official_portrait%2C_Homeland_Security_Council.jpg',
+  'Huma Abedin':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Huma_Abedin_%2852456232291%29_%28cropped%29.jpg/330px-Huma_Abedin_%2852456232291%29_%28cropped%29.jpg',
+  'Ilhan Omar':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Ilhan_Omar%2C_official_portrait%2C_116th_Congress_%28cropped%29_A.jpg/330px-Ilhan_Omar%2C_official_portrait%2C_116th_Congress_%28cropped%29_A.jpg',
+  'James Yee': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/James_Yee.JPG/330px-James_Yee.JPG',
+  'Jawed Karim':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Jawed_Karim_2008.jpg/330px-Jawed_Karim_2008.jpg',
+  'Kareem Rashad Sultan Khan':
+    'https://upload.wikimedia.org/wikipedia/commons/e/e3/KareemRashadSultanKhan.jpg',
+  'Keith Ellison':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Keith_Ellison_portrait.jpg/330px-Keith_Ellison_portrait.jpg',
+  'Khaled Hosseini':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Khaled_Hosseini%2C_2013_%28cropped%29.jpg/330px-Khaled_Hosseini%2C_2013_%28cropped%29.jpg',
+  'Malcolm X':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Malcolm_X_1963_press_photo.jpg/330px-Malcolm_X_1963_press_photo.jpg',
+  'Muhammad Ali':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Muhammad_Ali_NYWTS.jpg/330px-Muhammad_Ali_NYWTS.jpg',
+  'Nusrat Choudhury':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Nursat_Choudhury_%28Judge%29.jpg/330px-Nursat_Choudhury_%28Judge%29.jpg',
+  'Rashida Tlaib':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Tlaib_Rashida_119th_Congress_%283x4_cropped%29.jpg/330px-Tlaib_Rashida_119th_Congress_%283x4_cropped%29.jpg',
+  'Shahid Khan':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Shahid_Khan_2015.jpg/330px-Shahid_Khan_2015.jpg',
+  'Talal Asad': 'https://upload.wikimedia.org/wikipedia/commons/8/88/Professor_Talal_Asad_01_%28cropped%29.jpg',
+  'Zahid Quraishi':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Judge_Zahid_Quraishi_%28cropped%29.png/330px-Judge_Zahid_Quraishi_%28cropped%29.png',
+}
+
+const blockedWikipediaSummaryTitles = new Set([
+  'Al-Firdausi',
+  'Al-Layth_ibn_Sad',
+  'Ibn_Ajiba',
+  'Kamal_al-Din_Behzad',
+  'Maryam_al-Asturlabi',
+  'Shuhda_al-Katiba',
+  'Sutayta_al-Mahamali',
+])
+
+export const canFetchWikipediaSummary = (wikipediaTitle: string) =>
+  !blockedWikipediaSummaryTitles.has(wikipediaTitle)
 
 const categoryContexts: Record<string, string> = {
   'Architecture and art':
@@ -361,14 +422,26 @@ const americanMuslimRows = [
 ] as const
 
 const americanEditorsPickNames = new Set([
-  'Muhammad Ali',
-  'Malcolm X',
-  'Kareem Abdul-Jabbar',
   'Keith Ellison',
   'Ilhan Omar',
-  'Humayun Khan',
+  'Rashida Tlaib',
+  'André Carson',
+  'Huma Abedin',
+  'Nusrat Choudhury',
+  'Zahid Quraishi',
   'Hamdi Ulukaya',
+  'Shahid Khan',
+  'Jawed Karim',
   'Aziz Sancar',
+  'Muhammad Suhail Zubairy',
+  'Zia Mian',
+  'Ayesha Jalal',
+  'Talal Asad',
+  'Akbar Ahmed',
+  'Humayun Khan',
+  'Kareem Rashad Sultan Khan',
+  'James Yee',
+  'Ahmed Kousay al-Taie',
 ])
 
 const historicalEditorsPickNames = new Set([
@@ -383,6 +456,50 @@ const historicalEditorsPickNames = new Set([
 ])
 
 const todayRelevanceFor = (name: string, theme: Personality['theme']) => {
+  if (name === 'Keith Ellison') {
+    return 'Featured for readers reviewing American Muslim civic leadership, public law, public service, and practical contribution to United States institutions.'
+  }
+
+  if (name === 'Ilhan Omar') {
+    return 'Featured for readers reviewing representation, refugee experience, congressional service, and public policy work in the United States.'
+  }
+
+  if (name === 'Rashida Tlaib') {
+    return 'Featured for readers reviewing constituent service, congressional advocacy, legal training, and public representation in United States civic life.'
+  }
+
+  if (name === 'André Carson') {
+    return 'Featured for readers reviewing public safety, congressional service, civic work, and Muslim American representation in national institutions.'
+  }
+
+  if (name === 'Nusrat Choudhury') {
+    return 'Featured for readers reviewing civil-rights law, federal judicial service, and professional contribution to United States public institutions.'
+  }
+
+  if (name === 'Zahid Quraishi') {
+    return 'Featured for readers reviewing military legal service, federal judicial work, and professional public service in the United States.'
+  }
+
+  if (name === 'Hamdi Ulukaya') {
+    return 'Featured for readers reviewing enterprise, employment, refugee support, philanthropy, and business-led civic contribution in the United States.'
+  }
+
+  if (name === 'Shahid Khan') {
+    return 'Featured for readers reviewing manufacturing, entrepreneurship, sports ownership, philanthropy, and immigrant contribution to American economic life.'
+  }
+
+  if (name === 'Aziz Sancar') {
+    return 'Featured for readers reviewing scientific research, university teaching, public knowledge, and Nobel-recognized scholarship in the United States.'
+  }
+
+  if (name === 'Zia Mian') {
+    return 'Featured for readers reviewing nuclear-policy research, peace studies, public scholarship, and civic responsibility in American academic life.'
+  }
+
+  if (name === 'Humayun Khan') {
+    return 'Featured for readers reviewing military service, sacrifice, citizenship, and the public memory of American Muslim service members.'
+  }
+
   if (name === 'Muhammad Ali') {
     return 'Highlighted for readers thinking about courage, public conscience, sports, humanitarian service, and how American Muslims contribute to civic life beyond one profession.'
   }
@@ -415,6 +532,7 @@ const buildPersonalityList = ({
     editorsPick: editorPickNames.has(name),
     era,
     href: `/personalities/${slugify(name)}`,
+    imageUrl: portraitImageOverrides[name],
     initials: initialsFor(name),
     name,
     popularity: startingPopularity - index * 5,
@@ -511,15 +629,31 @@ export const getPersonalityDetailSections = (person: Personality) => [
   },
 ]
 
-export const featuredPersonality = americanMuslimPersonalities[0]
-export const editorsPicks = americanMuslimPersonalities
-  .filter((person) => person.editorsPick)
-  .slice(0, 8)
+export const featuredPersonality =
+  americanMuslimPersonalities.find((person) => person.name === 'Keith Ellison') ||
+  americanMuslimPersonalities[0]
+
+const editorPickOrder = [
+  'Keith Ellison',
+  'Ilhan Omar',
+  'Rashida Tlaib',
+  'André Carson',
+  'Huma Abedin',
+  'Nusrat Choudhury',
+  'Zahid Quraishi',
+  'Hamdi Ulukaya',
+  'Shahid Khan',
+  'Jawed Karim',
+  'Aziz Sancar',
+  'Muhammad Suhail Zubairy',
+  'Zia Mian',
+]
+
+export const editorsPicks = editorPickOrder
+  .map((name) => americanMuslimPersonalities.find((person) => person.name === name))
+  .filter((person): person is Personality => Boolean(person))
 
 const homepageSpotlightNames = [
-  'Muhammad Ali',
-  'Malcolm X',
-  'Kareem Abdul-Jabbar',
   'Keith Ellison',
   'Ilhan Omar',
   'Rashida Tlaib',
@@ -531,16 +665,18 @@ const homepageSpotlightNames = [
   'Kareem Rashad Sultan Khan',
   'James Yee',
   'Ahmed Kousay al-Taie',
-  'Shirin Neshat',
-  'Shahzia Sikander',
-  'Mahershala Ali',
-  'Dave Chappelle',
-  'Hasan Minhaj',
-  'Yasiin Bey',
-  'Iman',
-  'Ahmad Jamal',
   'Hamdi Ulukaya',
+  'Shahid Khan',
+  'Jawed Karim',
   'Aziz Sancar',
+  'Muhammad Suhail Zubairy',
+  'Zia Mian',
+  'Ayesha Jalal',
+  'Talal Asad',
+  'Akbar Ahmed',
+  'Fareed Zakaria',
+  'Khaled Hosseini',
+  'Laila Lalami',
 ]
 
 export const popularPersonalities = homepageSpotlightNames
@@ -561,16 +697,16 @@ export const historicalPersonalityCategories = Array.from(
 
 export const storyRows: StoryRow[] = [
   {
-    body: 'This story introduces the project’s United States focus: public service, faith, identity, sacrifice, culture, and how American Muslims have aided wider communities.',
+    body: 'This story introduces the project’s United States focus through public law, civic representation, public service, faith, identity, and how American Muslims have aided wider communities.',
     embedId: 'BpeZAm7rKHY',
     href: '/stories/american-muslim-public-life-and-humanity',
     length: '09:13',
-    name: 'Muhammad Ali',
-    role: 'Athlete, humanitarian, and public conscience',
+    name: 'Keith Ellison',
+    role: 'Attorney General and civic leader',
     slug: 'american-muslim-public-life-and-humanity',
     story: 'American Muslim public life and humanity',
     summary:
-      'A front-door story for American Muslim civic life, public service, and humanitarian contribution.',
+      'A front-door story for American Muslim civic leadership, public service, and institutional contribution.',
   },
   {
     body: 'This chapter frames Muhammad Ali as an athlete whose public choices turned fame into moral argument, humanitarian memory, and civic education.',
@@ -1016,31 +1152,57 @@ export const getStoryDetailSections = (story: StoryRow, person: Personality) => 
 
 export const sponsorRows: SponsorRow[] = [
   {
-    focus: 'United States civic profiles, public-service stories, and contributor onboarding',
-    href: '/sponsors/civic-humanity-fund',
-    name: 'Civic Humanity Fund',
-    slug: 'civic-humanity-fund',
+    adLabel: 'Travel partner',
+    focus: 'Cultural travel and regional discovery support for public learning programs.',
+    href: '/sponsors/switzerland-of-asia',
+    name: 'Switzerland of Asia',
+    slug: 'switzerland-of-asia',
     summary:
-      'A sample sponsor profile for local review. In production this page would show verified sponsor identity, supported research records, public credit language, and contact links.',
+      'Sponsor placement for travel, hospitality, and cultural destination support connected to public education and documentary storytelling.',
+    type: 'Travel and culture',
+  },
+  {
+    adLabel: 'Development partner',
+    details: [
+      {
+        heading: 'Group overview',
+        body: 'Hashim Group Companies in Turkey offer property and real-estate project services. Public sponsor details can be expanded by the editorial team after legal and brand review.',
+      },
+      {
+        heading: 'Public references',
+        body: 'The sponsor record can link to the official Hashim Property website and approved project video references once final sponsor copy is confirmed.',
+      },
+    ],
+    focus: 'Development visibility and sponsor support for public archive presentation.',
+    href: '/sponsors/hashim-group',
+    bannerImage: '/hashim-group-banner.png',
+    name: 'Hashim Group',
+    slug: 'hashim-group',
+    summary:
+      'Hashim Group sponsor page with document-derived public overview fields prepared for admin review and future expansion.',
+    type: 'Organization',
+    websiteLabel: 'Visit Hashim Property',
+    websiteUrl: 'https://hashimproperty.com/',
+  },
+  {
+    adLabel: 'Community benefit',
+    focus: 'Health, public benefit, and community-facing research support.',
+    href: '/sponsors/patient-benefits-foundation',
+    name: 'Patient Benefits Foundation',
+    slug: 'patient-benefits-foundation',
+    summary:
+      'Sponsor placement for health, welfare, and public-benefit initiatives connected to community service documentation.',
     type: 'Foundation',
   },
   {
-    focus: 'Muslims in History research path and source-backed educational articles',
-    href: '/sponsors/heritage-learning-trust',
-    name: 'Heritage Learning Trust',
-    slug: 'heritage-learning-trust',
+    adLabel: 'Airline partner',
+    focus: 'Travel access and international connectivity for public programming.',
+    href: '/sponsors/emirates',
+    name: 'Emirates',
+    slug: 'emirates',
     summary:
-      'A sample education sponsor supporting historical Muslim intellectual profiles, classroom-friendly articles, and source review.',
-    type: 'Educational trust',
-  },
-  {
-    focus: 'American Muslim service, veterans, public memory, and community documentation',
-    href: '/sponsors/service-and-memory-initiative',
-    name: 'Service and Memory Initiative',
-    slug: 'service-and-memory-initiative',
-    summary:
-      'A sample initiative for service-related story chapters and records where rights, sensitivity, and family context need careful review.',
-    type: 'Campaign',
+      'Sponsor placement for global travel and international connectivity support around review events and public programming.',
+    type: 'Corporate sponsor',
   },
 ]
 

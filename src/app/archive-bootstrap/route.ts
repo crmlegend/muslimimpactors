@@ -254,14 +254,24 @@ const runBootstrap = async (request: Request) => {
     const before = await getCounts(payload)
 
     if (before.people > 0 || before.stories > 0 || before.articles > 0) {
+      const shouldRefreshSeed = url.searchParams.get('refresh') !== 'false'
+
+      if (shouldRefreshSeed) {
+        const { seedArchive } = await import('../../scripts/seedArchive')
+        await seedArchive({ includeMedia: false })
+      }
+
       const published = shouldPublish ? await publishSeedContent(payload) : undefined
 
       return Response.json({
         after: await getCounts(payload),
         before,
-        message: 'Seed skipped because archive content already exists.',
+        message: shouldRefreshSeed
+          ? 'Archive content already existed; seed data was refreshed and published.'
+          : 'Seed skipped because archive content already exists.',
         ok: true,
         published,
+        refreshed: shouldRefreshSeed,
         skipped: true,
       })
     }

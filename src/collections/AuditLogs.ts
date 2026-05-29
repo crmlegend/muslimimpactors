@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { isSuperAdmin } from '@/access/roles'
+import { isPublisher } from '@/access/roles'
 
 export const AuditLogs: CollectionConfig = {
   slug: 'audit-logs',
@@ -11,7 +11,7 @@ export const AuditLogs: CollectionConfig = {
   access: {
     create: () => false,
     delete: () => false,
-    read: isSuperAdmin,
+    read: isPublisher,
     update: () => false,
   },
   admin: {

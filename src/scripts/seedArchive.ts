@@ -210,7 +210,7 @@ const createSeedMediaFiles = async () => {
   await mkdir(seedDir, { recursive: true })
 
   const imageFiles = [
-    { color: '#123c33', file: 'manuscript-reference.png', label: 'Manuscript reference panel' },
+    { color: '#0D76BC', file: 'manuscript-reference.png', label: 'Manuscript reference panel' },
     { color: '#253c59', file: 'portrait-reference.png', label: 'Portrait reference panel' },
     { color: '#7b3f35', file: 'map-reference.png', label: 'Map reference panel' },
     { color: '#6f5a28', file: 'source-card-reference.png', label: 'Source card reference panel' },
@@ -911,6 +911,11 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
       data: {
         editorApproved: false,
         name: sponsor.name,
+        adPlacementOrder: sponsorRows.findIndex((item) => item.slug === sponsor.slug) + 1,
+        bannerLabel: sponsor.adLabel,
+        homepageAdEnabled: true,
+        primaryCallToActionLabel: sponsor.websiteLabel,
+        primaryCallToActionUrl: sponsor.websiteUrl,
         publicCreditLine: `Research support provided by ${sponsor.name}.`,
         slug: sponsor.slug,
         sponsorType:
@@ -922,7 +927,9 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
         sponsoredArticles: articleIdList.slice(0, 4),
         sponsoredPeople: personIdList.slice(0, 8),
         sponsoredStories: storyIdList.slice(0, 6),
+        sponsorPageDetails: sponsor.details?.map((detail) => `${detail.heading}: ${detail.body}`).join('\n\n'),
         summary: sponsor.summary,
+        websiteUrl: sponsor.websiteUrl,
         workflowStatus: 'draft',
       },
       payload,
@@ -930,6 +937,65 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
 
     sponsorIds.set(sponsor.slug, sponsorRecord.id)
   }
+
+  const settingsApi = payload as never as {
+    updateGlobal: (args: Record<string, unknown>) => Promise<unknown>
+  }
+
+  await settingsApi.updateGlobal({
+    slug: 'site-settings',
+    data: {
+      branding: {
+        lightAccentColor: '#E1DFDE',
+        neutralColor: '#FFFFFF',
+        primaryColor: '#0D76BC',
+        secondaryColor: '#F2673C',
+        tertiaryColor: '#DF5A32',
+      },
+      homepage: {
+        dailyFeaturedPersonality: personIds.get('keith-ellison') || personIdList[0],
+        editorsChoice: [
+          personIds.get('keith-ellison'),
+          personIds.get('ilhan-omar'),
+          personIds.get('rashida-tlaib'),
+          personIds.get('andre-carson'),
+          personIds.get('nusrat-choudhury'),
+          personIds.get('zahid-quraishi'),
+          personIds.get('hamdi-ulukaya'),
+          personIds.get('shahid-khan'),
+          personIds.get('aziz-sancar'),
+          personIds.get('zia-mian'),
+        ].filter(Boolean),
+        recommendedStories: [
+          storyIds.get('service-sacrifice-and-american-muslim-memory'),
+          storyIds.get('enterprise-philanthropy-and-community-care'),
+          storyIds.get('science-research-and-public-good'),
+          storyIds.get('american-muslim-public-life-and-humanity'),
+        ].filter(Boolean),
+        sponsorAdSlots: [
+          'switzerland-of-asia',
+          'hashim-group',
+          'patient-benefits-foundation',
+          'emirates',
+        ]
+          .map((slug, index) => {
+            const sponsor = sponsorRows.find((item) => item.slug === slug)
+            const id = sponsorIds.get(slug)
+
+            if (!id || !sponsor) return null
+
+            return {
+              active: true,
+              placementLabel: sponsor.adLabel || 'Homepage sponsor',
+              placementOrder: index + 1,
+              sponsor: id,
+            }
+          })
+          .filter(Boolean),
+      },
+    },
+    overrideAccess: true,
+  })
 
   const essaySeeds = [
     {

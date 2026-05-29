@@ -85,6 +85,7 @@ export interface Config {
     'social-accounts': SocialAccount;
     'social-posts': SocialPost;
     'audit-logs': AuditLog;
+    'visitor-events': VisitorEvent;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -110,6 +111,7 @@ export interface Config {
     'social-accounts': SocialAccountsSelect<false> | SocialAccountsSelect<true>;
     'social-posts': SocialPostsSelect<false> | SocialPostsSelect<true>;
     'audit-logs': AuditLogsSelect<false> | AuditLogsSelect<true>;
+    'visitor-events': VisitorEventsSelect<false> | VisitorEventsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -119,8 +121,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'site-settings': SiteSetting;
+  };
+  globalsSelect: {
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -711,6 +717,28 @@ export interface Sponsor {
    */
   websiteUrl?: string | null;
   logo?: (number | null) | Media;
+  /**
+   * Show this sponsor in the homepage sponsor ad stack when selected by settings.
+   */
+  homepageAdEnabled?: boolean | null;
+  /**
+   * Default homepage ad order. Lower numbers appear first.
+   */
+  adPlacementOrder?: number | null;
+  /**
+   * Short label shown above this sponsor on ad cards.
+   */
+  bannerLabel?: string | null;
+  /**
+   * Optional wide sponsor banner image for public sponsor pages.
+   */
+  bannerImage?: (number | null) | Media;
+  /**
+   * Public detail paragraph shown on the sponsor page.
+   */
+  sponsorPageDetails?: string | null;
+  primaryCallToActionLabel?: string | null;
+  primaryCallToActionUrl?: string | null;
   /**
    * People or profiles directly sponsored by this sponsor.
    */
@@ -1790,6 +1818,35 @@ export interface AuditLog {
   createdAt: string;
 }
 /**
+ * Public website visit and task events captured for review. Publisher / Admin and Super Admin users can view these records.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "visitor-events".
+ */
+export interface VisitorEvent {
+  id: number;
+  eventType:
+    | 'page_view'
+    | 'search'
+    | 'sponsor_click'
+    | 'profile_open'
+    | 'video_open'
+    | 'signup_start'
+    | 'donate_click'
+    | 'other_task';
+  path: string;
+  targetType?: string | null;
+  targetSlug?: string | null;
+  visitorId?: string | null;
+  ipAddress?: string | null;
+  referrer?: string | null;
+  userAgent?: string | null;
+  metadata?: string | null;
+  occurredAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -1884,6 +1941,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'audit-logs';
         value: number | AuditLog;
+      } | null)
+    | ({
+        relationTo: 'visitor-events';
+        value: number | VisitorEvent;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -2083,6 +2144,13 @@ export interface SponsorsSelect<T extends boolean = true> {
   summary?: T;
   websiteUrl?: T;
   logo?: T;
+  homepageAdEnabled?: T;
+  adPlacementOrder?: T;
+  bannerLabel?: T;
+  bannerImage?: T;
+  sponsorPageDetails?: T;
+  primaryCallToActionLabel?: T;
+  primaryCallToActionUrl?: T;
   sponsoredPeople?: T;
   sponsoredStories?: T;
   sponsoredArticles?: T;
@@ -2796,6 +2864,24 @@ export interface AuditLogsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "visitor-events_select".
+ */
+export interface VisitorEventsSelect<T extends boolean = true> {
+  eventType?: T;
+  path?: T;
+  targetType?: T;
+  targetSlug?: T;
+  visitorId?: T;
+  ipAddress?: T;
+  referrer?: T;
+  userAgent?: T;
+  metadata?: T;
+  occurredAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -2833,6 +2919,114 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * Controls reviewer-facing homepage selections, sponsor placements, and global brand colors.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  homepage?: {
+    /**
+     * Default personality shown in the homepage focus area when no scheduled override is active.
+     */
+    dailyFeaturedPersonality?: (number | null) | Person;
+    /**
+     * Optional manually scheduled homepage feature. Takes priority while the date window is active.
+     */
+    manualFeaturedPersonality?: (number | null) | Person;
+    /**
+     * Start time for the manual homepage feature.
+     */
+    manualFeaturedStartsAt?: string | null;
+    /**
+     * End time for the manual homepage feature.
+     */
+    manualFeaturedEndsAt?: string | null;
+    /**
+     * Profiles displayed in the Editor’s Choice section.
+     */
+    editorsChoice?: (number | Person)[] | null;
+    /**
+     * Story/video records displayed in the Recommended Videos section.
+     */
+    recommendedStories?: (number | Story)[] | null;
+    /**
+     * Homepage sponsor ad stack. Lower order values appear first. Leave empty to use the seeded default sponsor order.
+     */
+    sponsorAdSlots?:
+      | {
+          sponsor: number | Sponsor;
+          placementLabel?: string | null;
+          placementOrder?: number | null;
+          active?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  branding?: {
+    /**
+     * Use a hex color value. Example: #0D76BC.
+     */
+    primaryColor?: string | null;
+    /**
+     * Use a hex color value. Example: #0D76BC.
+     */
+    secondaryColor?: string | null;
+    /**
+     * Use a hex color value. Example: #0D76BC.
+     */
+    tertiaryColor?: string | null;
+    /**
+     * Use a hex color value. Example: #0D76BC.
+     */
+    lightAccentColor?: string | null;
+    /**
+     * Use a hex color value. Example: #0D76BC.
+     */
+    neutralColor?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  homepage?:
+    | T
+    | {
+        dailyFeaturedPersonality?: T;
+        manualFeaturedPersonality?: T;
+        manualFeaturedStartsAt?: T;
+        manualFeaturedEndsAt?: T;
+        editorsChoice?: T;
+        recommendedStories?: T;
+        sponsorAdSlots?:
+          | T
+          | {
+              sponsor?: T;
+              placementLabel?: T;
+              placementOrder?: T;
+              active?: T;
+              id?: T;
+            };
+      };
+  branding?:
+    | T
+    | {
+        primaryColor?: T;
+        secondaryColor?: T;
+        tertiaryColor?: T;
+        lightAccentColor?: T;
+        neutralColor?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

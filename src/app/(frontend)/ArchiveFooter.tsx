@@ -9,13 +9,16 @@ export default function ArchiveFooter() {
           Muslim Impactors
         </Link>
         <p>
-          Public research archive for Muslim public service, humanitarian contribution, civic life,
-          scholarship, culture, and historical intellectual context.
+          Public archive for Muslim civic service, professional achievement, humanitarian
+          contribution, scholarship, culture, and historical intellectual context in the United
+          States.
         </p>
       </div>
       <nav aria-label="Footer navigation">
         <Link href="/stories">Stories</Link>
         <Link href="/articles">Articles</Link>
+        <Link href="/themes">Themes</Link>
+        <Link href="/timelines">Timelines</Link>
         <Link href="/workflow">Submission process</Link>
         <Link href="/contributors">Contributors</Link>
         <Link href="/sponsors">Sponsors</Link>
@@ -25,10 +28,6 @@ export default function ArchiveFooter() {
         <Link href="/admin">Staff sign in</Link>
         <Link href="/donate">Donate</Link>
       </nav>
-      <small>
-        Sample MVP data uses source links for review and placeholder YouTube embeds. Replace with
-        approved/licensed media before launch.
-      </small>
     </footer>
   )
 }

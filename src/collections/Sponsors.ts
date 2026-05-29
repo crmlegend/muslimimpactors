@@ -12,7 +12,7 @@ export const Sponsors: CollectionConfig = {
     update: internalOnly,
   },
   admin: {
-    defaultColumns: ['name', 'sponsorType', 'workflowStatus'],
+    defaultColumns: ['name', 'sponsorType', 'homepageAdEnabled', 'adPlacementOrder', 'workflowStatus'],
     description:
       'Manage sponsors and connect them to articles, personalities, stories, essays, pages, and public campaigns.',
     useAsTitle: 'name',
@@ -53,6 +53,52 @@ export const Sponsors: CollectionConfig = {
       name: 'logo',
       type: 'relationship',
       relationTo: 'media',
+    },
+    {
+      name: 'homepageAdEnabled',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description: 'Show this sponsor in the homepage sponsor ad stack when selected by settings.',
+      },
+    },
+    {
+      name: 'adPlacementOrder',
+      type: 'number',
+      defaultValue: 99,
+      admin: {
+        description: 'Default homepage ad order. Lower numbers appear first.',
+      },
+    },
+    {
+      name: 'bannerLabel',
+      type: 'text',
+      admin: {
+        description: 'Short label shown above this sponsor on ad cards.',
+      },
+    },
+    {
+      name: 'bannerImage',
+      type: 'relationship',
+      relationTo: 'media',
+      admin: {
+        description: 'Optional wide sponsor banner image for public sponsor pages.',
+      },
+    },
+    {
+      name: 'sponsorPageDetails',
+      type: 'textarea',
+      admin: {
+        description: 'Public detail paragraph shown on the sponsor page.',
+      },
+    },
+    {
+      name: 'primaryCallToActionLabel',
+      type: 'text',
+    },
+    {
+      name: 'primaryCallToActionUrl',
+      type: 'text',
     },
     {
       name: 'sponsoredPeople',

@@ -1,19 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 900" role="img" aria-label="Manuscript-style archival page">
   <defs>
     <linearGradient id="paper" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#fff8e6"/>
-      <stop offset="1" stop-color="#d9c49b"/>
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e1dfde"/>
     </linearGradient>
     <pattern id="rule" width="80" height="80" patternUnits="userSpaceOnUse">
-      <path d="M0 79.5H80M79.5 0V80" fill="none" stroke="#8a6a36" stroke-opacity=".12"/>
+      <path d="M0 79.5H80M79.5 0V80" fill="none" stroke="#0d76bc" stroke-opacity=".12"/>
     </pattern>
   </defs>
-  <rect width="1400" height="900" fill="#123c33"/>
+  <rect width="1400" height="900" fill="#0d76bc"/>
   <rect x="90" y="70" width="1220" height="760" rx="8" fill="url(#paper)"/>
   <rect x="90" y="70" width="1220" height="760" rx="8" fill="url(#rule)"/>
-  <rect x="145" y="130" width="1110" height="650" fill="none" stroke="#7b4f21" stroke-width="8" stroke-opacity=".35"/>
-  <rect x="185" y="170" width="1030" height="570" fill="none" stroke="#123c33" stroke-width="2" stroke-opacity=".35"/>
-  <g fill="#13201d" opacity=".78">
+  <rect x="145" y="130" width="1110" height="650" fill="none" stroke="#f2673c" stroke-width="8" stroke-opacity=".35"/>
+  <rect x="185" y="170" width="1030" height="570" fill="none" stroke="#0d76bc" stroke-width="2" stroke-opacity=".35"/>
+  <g fill="#173653" opacity=".78">
     <rect x="245" y="250" width="520" height="18" rx="9"/>
     <rect x="245" y="302" width="835" height="16" rx="8"/>
     <rect x="245" y="354" width="760" height="16" rx="8"/>
@@ -22,11 +22,11 @@
     <rect x="245" y="510" width="835" height="16" rx="8"/>
     <rect x="245" y="562" width="650" height="16" rx="8"/>
   </g>
-  <g fill="#9a5b2f" opacity=".78">
+  <g fill="#df5a32" opacity=".78">
     <circle cx="1070" cy="225" r="54"/>
-    <circle cx="1070" cy="225" r="34" fill="#fff8e6"/>
+    <circle cx="1070" cy="225" r="34" fill="#ffffff"/>
     <rect x="1018" y="630" width="104" height="28" rx="14"/>
     <rect x="980" y="675" width="180" height="18" rx="9"/>
   </g>
-  <path d="M183 190C275 134 373 130 450 178C522 223 600 223 692 178C775 139 874 136 963 190" fill="none" stroke="#b89144" stroke-width="10" stroke-linecap="round" opacity=".48"/>
+  <path d="M183 190C275 134 373 130 450 178C522 223 600 223 692 178C775 139 874 136 963 190" fill="none" stroke="#f2673c" stroke-width="10" stroke-linecap="round" opacity=".48"/>
 </svg>

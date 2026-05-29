@@ -7,7 +7,21 @@ export const Users: CollectionConfig = {
   access: {
     create: isPublisher,
     delete: isPublisher,
-    read: ({ req: { user } }) => Boolean(user),
+    read: ({ req: { user } }) => {
+      if (!user) {
+        return false
+      }
+
+      if (isPublisherRole(user)) {
+        return true
+      }
+
+      return {
+        id: {
+          equals: user.id,
+        },
+      }
+    },
     update: ({ req: { user }, id }) => isPublisherRole(user) || user?.id === id,
   },
   admin: {

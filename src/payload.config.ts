@@ -25,7 +25,9 @@ import { Sponsors } from './collections/Sponsors'
 import { Stories } from './collections/Stories'
 import { Tags } from './collections/Tags'
 import { Topics } from './collections/Topics'
+import { VisitorEvents } from './collections/VisitorEvents'
 import { withAudit } from './collections/auditHooks'
+import { SiteSettings } from './globals/SiteSettings'
 import { migrations } from './migrations'
 
 const filename = fileURLToPath(import.meta.url)
@@ -96,8 +98,10 @@ export default buildConfig({
     withAudit(SocialAccounts, 'label'),
     withAudit(SocialPosts, 'title'),
     AuditLogs,
+    VisitorEvents,
   ],
   editor: lexicalEditor(),
+  globals: [SiteSettings],
   secret: process.env.PAYLOAD_SECRET || '',
   serverURL: siteURL,
   typescript: {

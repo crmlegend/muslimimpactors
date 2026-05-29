@@ -53,6 +53,11 @@ export default async function SponsorDetailPage({ params }: SponsorDetailPagePro
             <span>{sponsor.type}</span>
             <h1>{sponsor.name}</h1>
             <p>{sponsor.summary}</p>
+            {sponsor.websiteUrl ? (
+              <a className="button primary sponsor-cta" href={sponsor.websiteUrl}>
+                {sponsor.websiteLabel || 'Visit sponsor website'}
+              </a>
+            ) : null}
           </div>
           <aside>
             <strong>Sponsored focus</strong>
@@ -60,10 +65,22 @@ export default async function SponsorDetailPage({ params }: SponsorDetailPagePro
           </aside>
         </section>
 
+        {sponsor.bannerImage ? (
+          <section className="sponsor-banner">
+            <img alt={`${sponsor.name} banner`} src={sponsor.bannerImage} />
+          </section>
+        ) : null}
+
         <section className="two-column-content">
           <article>
             <h2>Public sponsor page model</h2>
             <div className="detail-section-list">
+              {sponsor.details?.map((detail) => (
+                <section key={detail.heading}>
+                  <h3>{detail.heading}</h3>
+                  <p>{detail.body}</p>
+                </section>
+              ))}
               <section>
                 <h3>Editorial independence</h3>
                 <p>

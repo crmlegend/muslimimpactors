@@ -1,26 +1,142 @@
 'use client'
 
 import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import ArchiveHeader from './ArchiveHeader'
 import {
+  canFetchWikipediaSummary,
   editorsPicks,
   featuredPersonality,
   getPersonalityStory,
   getPersonalityVideo,
   getRelatedStoriesForPerson,
+  historicalPersonalities,
   popularPersonalities,
+  sponsorRows,
   storyRows,
-  themes,
   youtubeVideos,
 } from './archiveData'
 
-export default function ArchiveExperience() {
+type ArchiveExperienceSettings = {
+  brandColors?: {
+    lightAccentColor?: string
+    neutralColor?: string
+    primaryColor?: string
+    secondaryColor?: string
+    tertiaryColor?: string
+  }
+  editorChoiceSlugs?: string[]
+  featuredPersonalitySource?: 'daily' | 'manual'
+  featuredPersonalitySlug?: string
+  recommendedStorySlugs?: string[]
+  sponsorLabels?: Record<string, string>
+  sponsorSlugs?: string[]
+}
+
+type ArchiveExperienceProps = {
+  settings?: ArchiveExperienceSettings
+}
+
+const uniqueBySlug = <T extends { slug: string }>(items: T[]) => {
+  const seen = new Set<string>()
+
+  return items.filter((item) => {
+    if (seen.has(item.slug)) {
+      return false
+    }
+
+    seen.add(item.slug)
+    return true
+  })
+}
+
+const isDefined = <T,>(value: T | null | undefined): value is T => Boolean(value)
+
+const professionalFeatureSlugs = new Set([
+  'keith-ellison',
+  'ilhan-omar',
+  'rashida-tlaib',
+  'andre-carson',
+  'huma-abedin',
+  'nusrat-choudhury',
+  'zahid-quraishi',
+  'hamdi-ulukaya',
+  'shahid-khan',
+  'jawed-karim',
+  'aziz-sancar',
+  'muhammad-suhail-zubairy',
+  'zia-mian',
+  'ayesha-jalal',
+  'talal-asad',
+  'akbar-ahmed',
+  'fareed-zakaria',
+  'khaled-hosseini',
+  'laila-lalami',
+  'humayun-khan',
+  'kareem-rashad-sultan-khan',
+  'james-yee',
+  'ahmed-kousay-al-taie',
+])
+
+export default function ArchiveExperience({ settings }: ArchiveExperienceProps) {
   const [portraitImages, setPortraitImages] = useState<Record<string, string>>({})
-  const [saved, setSaved] = useState(false)
   const [selectedPersonSlug, setSelectedPersonSlug] = useState<string | null>(null)
-  const [transcriptOpen, setTranscriptOpen] = useState(false)
+  const configuredFeaturedPersonality = popularPersonalities.find(
+    (person) => person.slug === settings?.featuredPersonalitySlug,
+  )
+  const shouldUseConfiguredFeatured = configuredFeaturedPersonality
+    ? professionalFeatureSlugs.has(configuredFeaturedPersonality.slug)
+    : false
+  const activeFeaturedPersonality =
+    shouldUseConfiguredFeatured && configuredFeaturedPersonality
+      ? configuredFeaturedPersonality
+      : featuredPersonality
+  const portraitPeople = useMemo(
+    () =>
+      uniqueBySlug([
+        activeFeaturedPersonality,
+        ...popularPersonalities.filter((person) => person.slug !== activeFeaturedPersonality.slug),
+      ]).slice(0, 24),
+    [activeFeaturedPersonality],
+  )
+  const goldenAgePeople = useMemo(
+    () =>
+      historicalPersonalities
+        .filter((person) =>
+          [
+            'Ibn Khaldun',
+            'Al-Biruni',
+            'Fatima al-Fihri',
+            'Ibn Sina',
+            'Al-Khwarizmi',
+            'Ibn al-Haytham',
+            'Al-Jazari',
+            'Mimar Sinan',
+          ].includes(person.name),
+        )
+        .slice(0, 8),
+    [],
+  )
+  const editorChoicePeople =
+    settings?.editorChoiceSlugs
+      ?.map((slug) => popularPersonalities.find((person) => person.slug === slug))
+      .filter(isDefined) || editorsPicks
+  const recommendedStories =
+    settings?.recommendedStorySlugs
+      ?.map((slug) => storyRows.find((story) => story.slug === slug))
+      .filter(isDefined) || storyRows.slice(0, 6)
+  const sponsorAds =
+    settings?.sponsorSlugs
+      ?.map((slug) => sponsorRows.find((sponsor) => sponsor.slug === slug))
+      .filter(isDefined) || sponsorRows
+  const brandStyle = {
+    '--brand-light': settings?.brandColors?.lightAccentColor || '#E1DFDE',
+    '--brand-neutral': settings?.brandColors?.neutralColor || '#FFFFFF',
+    '--brand-primary': settings?.brandColors?.primaryColor || '#0D76BC',
+    '--brand-secondary': settings?.brandColors?.secondaryColor || '#F2673C',
+    '--brand-tertiary': settings?.brandColors?.tertiaryColor || '#DF5A32',
+  } as React.CSSProperties
   const selectedPerson = selectedPersonSlug
     ? popularPersonalities.find((person) => person.slug === selectedPersonSlug)
     : null
@@ -28,11 +144,45 @@ export default function ArchiveExperience() {
   const selectedVideo =
     selectedPerson && selectedStory ? getPersonalityVideo(selectedPerson, selectedStory) : null
   const selectedRelatedStories = selectedPerson ? getRelatedStoriesForPerson(selectedPerson) : []
-  const featuredStory = storyRows[0]
+
+  const logVisitorEvent = useCallback(
+    (event: {
+      eventType: string
+      metadata?: string
+      targetSlug?: string
+      targetType?: string
+    }) => {
+      if (typeof window === 'undefined') {
+        return
+      }
+
+      const storageKey = 'muslim-impactors-visitor-id'
+      const existingId = window.localStorage.getItem(storageKey)
+      const visitorId =
+        existingId ||
+        `mi-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+
+      if (!existingId) {
+        window.localStorage.setItem(storageKey, visitorId)
+      }
+
+      void fetch('/api/visitor-event', {
+        body: JSON.stringify({
+          ...event,
+          path: window.location.pathname,
+          visitorId,
+        }),
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        method: 'POST',
+      }).catch(() => undefined)
+    },
+    [],
+  )
 
   useEffect(() => {
     const controller = new AbortController()
-    const people = popularPersonalities.slice(0, 24)
+    const people = portraitPeople.filter((person) => canFetchWikipediaSummary(person.wikipediaTitle))
 
     const loadImages = async () => {
       const entries = await Promise.all(
@@ -65,246 +215,188 @@ export default function ArchiveExperience() {
     void loadImages()
 
     return () => controller.abort()
-  }, [])
+  }, [portraitPeople])
+
+  useEffect(() => {
+    logVisitorEvent({ eventType: 'page_view' })
+  }, [logVisitorEvent])
 
   return (
-    <div className="archive-shell stories">
+    <div className="archive-shell stories" style={brandStyle}>
       <ArchiveHeader />
 
       <main>
-        <section className="figure-focus hero-figure" id="portrait-index">
-          <div className="focus-copy">
-            <span>Figure in focus</span>
-            <h1>{featuredPersonality.name}</h1>
-            <p>{featuredPersonality.todayRelevance}</p>
-            <div className="focus-meta">
-              <strong>{featuredPersonality.era}</strong>
-              <small>{featuredPersonality.role}</small>
-              <small>{featuredPersonality.region}</small>
-            </div>
-            <div className="hero-actions">
-              <Link className="button primary" href={featuredPersonality.href}>
-                Open featured dossier
-              </Link>
-              <a className="button secondary" href="#story-feature">
-                Watch chapter
-              </a>
-            </div>
-          </div>
-
-          <div className="portrait-wall-panel">
-            <div className="portrait-mosaic" aria-label="Personality portrait index">
-              {popularPersonalities.slice(0, 24).map((person, index) => (
-                <button
-                  className={`portrait-tile ${index === 0 ? 'is-featured' : ''} ${
-                    portraitImages[person.slug] ? 'has-photo' : ''
-                  } portrait-variant-${index % 5}`}
-                  data-person-slug={person.slug}
-                  key={person.slug}
-                  onClick={() => setSelectedPersonSlug(person.slug)}
-                  style={
-                    {
-                      '--portrait-image': portraitImages[person.slug]
-                        ? `url("${portraitImages[person.slug]}")`
-                        : undefined,
-                      '--portrait-tone': person.tone,
-                    } as React.CSSProperties
-                  }
-                  type="button"
-                >
-                  <span className="portrait-picture" aria-hidden="true">
-                    <span className="portrait-arch" />
-                    <span className="portrait-halo" />
-                    <span className="portrait-turban" />
-                    <span className="portrait-head" />
-                    <span className="portrait-beard" />
-                    <span className="portrait-robe" />
-                    <span className="portrait-book" />
-                  </span>
-                  <span className="portrait-overlay">
-                    <strong>{person.name}</strong>
-                    <small>{person.role}</small>
-                    <em>{person.summary}</em>
-                  </span>
-                  <span className="portrait-hover-card" aria-hidden="true">
-                    <strong>{getPersonalityStory(person).story}</strong>
-                    <span>{person.name}</span>
-                    <small>{person.role}</small>
-                  </span>
-                </button>
+        <section className="review-home-grid" id="portrait-index">
+          <aside className="golden-age-rail">
+            <span>Muslims in History</span>
+            <h2>Historical foundations</h2>
+            <p>
+              Earlier scholars, physicians, jurists, scientists, institution builders, and artists
+              preserved as context for today&apos;s civic and professional impact stories.
+            </p>
+            <div>
+              {goldenAgePeople.map((person) => (
+                <Link href={person.href} key={person.slug}>
+                  <strong>{person.name}</strong>
+                  <small>{person.category}</small>
+                </Link>
               ))}
             </div>
-            <p>
-              Hover over a portrait for a story preview. Click a portrait to open the video card.
-            </p>
-          </div>
-        </section>
-
-        <section className="story-layout">
-          <aside className="story-sidebar">
-            <Link className="story-logo" href="/">
-              Muslim Impactors
+            <Link className="rail-link" href="/muslims-in-history">
+              Open historical index
             </Link>
-            <nav aria-label="Story archive navigation">
-              <a href="#story-feature">Featured story</a>
-              <Link href="/stories">Stories</Link>
-              <Link href="/personalities">Personalities</Link>
-              <a href="#portrait-index">Portrait index</a>
-              <Link href="/themes">Themes</Link>
-              <Link href="/blog">Blog</Link>
-              <Link href="/ask">Help</Link>
-            </nav>
           </aside>
 
-          <section className="story-feature" id="story-feature">
-            <div className="media-window video-window">
-              <iframe
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                src={`https://www.youtube-nocookie.com/embed/${youtubeVideos[0].embedId}`}
-                title={youtubeVideos[0].title}
-              />
-            </div>
-            <div className="story-copy">
-              <span>Featured documentary chapter</span>
-              <h1>{featuredStory.story}</h1>
-              <p>{featuredStory.summary}</p>
-              <div className="story-actions">
-                <button onClick={() => setSaved((value) => !value)} type="button">
-                  {saved ? 'Saved to research list' : 'Save to research list'}
-                </button>
-                <button onClick={() => setTranscriptOpen((value) => !value)} type="button">
-                  {transcriptOpen ? 'Hide transcript' : 'Open transcript'}
-                </button>
-                <Link className="button secondary" href={featuredPersonality.href}>
-                  Open dossier
-                </Link>
-              </div>
+          <section className="review-feature-panel webstories-home-stage">
+            <div className="portrait-wall-panel">
+              <h1 className="sr-only">Muslim Impactors civic and professional portrait archive</h1>
+              <div className="portrait-mosaic" aria-label="Personality portrait index">
+                {portraitPeople.map((person, index) => {
+                  const portraitImage = portraitImages[person.slug] || person.imageUrl
 
-              {transcriptOpen ? (
-                <div className="transcript-panel">
-                  <strong>Transcript preview</strong>
-                  <p>{featuredStory.body}</p>
-                </div>
-              ) : null}
+                  return (
+                    <button
+                      className={`portrait-tile ${
+                        person.slug === activeFeaturedPersonality.slug ? 'is-featured' : ''
+                      } ${portraitImage ? 'has-photo' : ''} portrait-variant-${index % 5}`}
+                      data-person-slug={person.slug}
+                      key={person.slug}
+                      onClick={() => {
+                        setSelectedPersonSlug(person.slug)
+                        logVisitorEvent({
+                          eventType: 'video_open',
+                          targetSlug: person.slug,
+                          targetType: 'personality',
+                        })
+                      }}
+                      style={
+                        {
+                          '--portrait-image': portraitImage ? `url("${portraitImage}")` : undefined,
+                          '--portrait-tone': person.tone,
+                        } as React.CSSProperties
+                      }
+                      type="button"
+                    >
+                      <span className="portrait-picture" aria-hidden="true">
+                        <span className="portrait-arch" />
+                        <span className="portrait-halo" />
+                        <span className="portrait-turban" />
+                        <span className="portrait-head" />
+                        <span className="portrait-beard" />
+                        <span className="portrait-robe" />
+                        <span className="portrait-book" />
+                      </span>
+                      <span className="portrait-overlay">
+                        <strong>{person.name}</strong>
+                        <small>{person.role}</small>
+                        <em>{person.summary}</em>
+                      </span>
+                      <span className="portrait-hover-card" aria-hidden="true">
+                        <strong>{getPersonalityStory(person).story}</strong>
+                        <span>{person.name}</span>
+                        <small>{person.role}</small>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="portrait-wall-caption">
+                Hover over a portrait for a record preview. Click any portrait to open the video
+                card.
+              </p>
             </div>
           </section>
 
-          <aside className="related-rail">
-            <span>Related stories</span>
-            {storyRows.slice(1).map((row) => (
-              <Link href={row.href} key={row.story}>
-                <strong>{row.story}</strong>
-                <p>{row.name}</p>
-                <small>{row.length}</small>
-              </Link>
-            ))}
+          <aside className="sponsor-ad-rail" aria-label="Sponsor placements">
+            <span>Sponsor Network</span>
+            <h2>Project Sponsors</h2>
+            <div>
+              {sponsorAds.map((sponsor) => (
+                <Link
+                  className="sponsor-ad-card"
+                  href={sponsor.href}
+                  key={sponsor.slug}
+                  onClick={() =>
+                    logVisitorEvent({
+                      eventType: 'sponsor_click',
+                      targetSlug: sponsor.slug,
+                      targetType: 'sponsor',
+                    })
+                  }
+                >
+                  <small>{settings?.sponsorLabels?.[sponsor.slug] || sponsor.adLabel}</small>
+                  <strong>{sponsor.name}</strong>
+                  <p>{sponsor.focus}</p>
+                </Link>
+              ))}
+            </div>
+            <Link className="rail-link" href="/sponsors">
+              View sponsor directory
+            </Link>
           </aside>
         </section>
 
-        <section className="curated-strips">
-          <div className="panel-heading">
-            <span>Editor&apos;s pick</span>
-            <h2>Profiles selected for first review</h2>
-          </div>
-          <div className="compact-person-grid">
-            {editorsPicks.map((person) => (
-              <Link href={person.href} key={person.slug}>
-                <span>{person.category}</span>
-                <h3>{person.name}</h3>
-                <p>{person.summary}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
+        <section className="homepage-review-secondary">
+          <div className="editor-pick-main">
+            <div className="panel-heading">
+              <span>Editor&apos;s Choice</span>
+              <h2>Profiles selected for first review</h2>
+            </div>
+            <div className="compact-person-grid">
+              {editorChoicePeople.map((person) => (
+                <Link href={person.href} key={person.slug}>
+                  <span>{person.category}</span>
+                  <h3>{person.name}</h3>
+                  <p>{person.summary}</p>
+                </Link>
+              ))}
+            </div>
 
-        <section className="curated-strips popular-strip">
-          <div className="panel-heading">
-            <span>Most popular stories</span>
-            <h2>Frequently opened story chapters</h2>
-          </div>
-          <div className="ranked-list">
-            {storyRows.map((story, index) => (
-              <Link href={story.href} key={story.slug}>
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                <strong>{story.story}</strong>
-                <small>
-                  {story.name} - {story.length}
-                </small>
-              </Link>
-            ))}
-          </div>
-        </section>
+            <div className="recommended-video-strip" aria-label="Recommended video references">
+              <div className="panel-heading">
+                <span>Recommended Videos</span>
+                <h2>Documentary references selected for review</h2>
+              </div>
+              <div className="video-grid">
+                {recommendedStories.slice(0, 3).map((story, index) => {
+                  const person = popularPersonalities.find((item) => item.name === story.name)
+                  const video = person ? getPersonalityVideo(person, story) : youtubeVideos[index]
 
-        <section className="curated-strips popular-strip">
-          <div className="panel-heading">
-            <span>Most popular personalities</span>
-            <h2>High-interest entry points for public readers</h2>
+                  return (
+                    <article key={story.slug}>
+                      <div className="video-frame">
+                        <iframe
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          src={`https://www.youtube-nocookie.com/embed/${video?.embedId || youtubeVideos[0].embedId}`}
+                          title={video?.title || story.story}
+                        />
+                      </div>
+                      <span>{video?.topic || story.role}</span>
+                      <h3>{story.story}</h3>
+                      <p>{video?.source || story.name}</p>
+                    </article>
+                  )
+                })}
+              </div>
+            </div>
           </div>
-          <div className="ranked-list">
-            {popularPersonalities.slice(0, 10).map((person, index) => (
-              <Link href={person.href} key={person.slug}>
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                <strong>{person.name}</strong>
-                <small>{person.category}</small>
-              </Link>
-            ))}
-          </div>
-        </section>
 
-        <section className="video-shelf">
-          <div className="panel-heading">
-            <span>Video references</span>
-            <h2>Embedded documentary references</h2>
-          </div>
-          <div className="video-grid">
-            {youtubeVideos.map((video) => (
-              <article key={video.embedId}>
-                <div className="video-frame">
-                  <iframe
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    src={`https://www.youtube-nocookie.com/embed/${video.embedId}`}
-                    title={video.title}
-                  />
-                </div>
-                <span>{video.topic}</span>
-                <h3>{video.title}</h3>
-                <p>{video.source}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="storyteller-index" id="storytellers">
-          <div className="panel-heading">
-            <span>Story archive</span>
-            <h2>Personalities with chaptered narrative pages</h2>
-          </div>
-          <div className="story-card-grid">
-            {storyRows.map((row) => (
-              <Link href={row.href} key={row.slug}>
-                <span>{row.length}</span>
-                <h3>{row.name}</h3>
-                <p>{row.role}</p>
-                <strong>{row.story}</strong>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="theme-browser" id="themes">
-          <div className="panel-heading">
-            <span>Theme browser</span>
-            <h2>Research paths across the archive</h2>
-          </div>
-          <div className="theme-list">
-            {themes.map((theme) => (
-              <Link href="/themes" key={theme}>
-                {theme}
-              </Link>
-            ))}
-          </div>
+          <aside className="popular-personality-rail">
+            <div className="panel-heading">
+              <span>Popular Personalities</span>
+              <h2>High-interest entry points</h2>
+            </div>
+            <div className="ranked-list">
+              {popularPersonalities.slice(0, 8).map((person, index) => (
+                <Link href={person.href} key={person.slug}>
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                  <strong>{person.name}</strong>
+                  <small>{person.category}</small>
+                </Link>
+              ))}
+            </div>
+          </aside>
         </section>
       </main>
 
