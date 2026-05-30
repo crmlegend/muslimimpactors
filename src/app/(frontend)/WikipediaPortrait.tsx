@@ -19,11 +19,12 @@ export default function WikipediaPortrait({
   tone,
   wikipediaTitle,
 }: WikipediaPortraitProps) {
-  const [image, setImage] = useState<string | null>(null)
+  const [image, setImage] = useState<{ source: string; title: string } | null>(null)
+  const canFetchImage = canFetchWikipediaSummary(wikipediaTitle)
+  const imageSource = canFetchImage && image?.title === wikipediaTitle ? image.source : null
 
   useEffect(() => {
-    if (!canFetchWikipediaSummary(wikipediaTitle)) {
-      setImage(null)
+    if (!canFetchImage) {
       return
     }
 
@@ -43,11 +44,13 @@ export default function WikipediaPortrait({
         const data = (await response.json()) as { thumbnail?: { source?: string } }
 
         if (!controller.signal.aborted && data.thumbnail?.source) {
-          setImage(data.thumbnail.source)
+          setImage({ source: data.thumbnail.source, title: wikipediaTitle })
         }
       } catch {
         if (!controller.signal.aborted) {
-          setImage(null)
+          setImage((currentImage) =>
+            currentImage?.title === wikipediaTitle ? null : currentImage,
+          )
         }
       }
     }
@@ -55,21 +58,21 @@ export default function WikipediaPortrait({
     void loadImage()
 
     return () => controller.abort()
-  }, [wikipediaTitle])
+  }, [canFetchImage, wikipediaTitle])
 
   return (
     <div
       aria-label={`${name} portrait`}
-      className={`${className} ${image ? 'has-photo' : ''}`.trim()}
+      className={`${className} ${imageSource ? 'has-photo' : ''}`.trim()}
       role="img"
       style={
         {
-          '--portrait-image': image ? `url("${image}")` : undefined,
+          '--portrait-image': imageSource ? `url("${imageSource}")` : undefined,
           '--portrait-tone': tone,
         } as React.CSSProperties
       }
     >
-      {image ? null : initials}
+      {imageSource ? null : initials}
     </div>
   )
 }

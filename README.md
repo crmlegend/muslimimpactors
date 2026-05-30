@@ -59,10 +59,10 @@ For the first Supabase-backed production launch, set:
 DATABASE_URL=postgres://...
 PAYLOAD_SECRET=replace-with-a-long-secret
 NEXT_PUBLIC_SITE_URL=https://muslimimpactors.americanmotivations.com
-PAYLOAD_POSTGRES_PUSH=true
+PAYLOAD_POSTGRES_PUSH=false
 ```
 
-After the first successful deploy and seed, remove `PAYLOAD_POSTGRES_PUSH` or set it to `false`.
+Temporarily set `PAYLOAD_POSTGRES_PUSH=true` only while creating the initial production schema, then set it back to `false` before leaving the service online.
 
 ## Launch-Day Deployment
 
@@ -85,6 +85,8 @@ After the service deploys, run the archive seed once from the host shell:
 ```bash
 npm run seed:archive
 ```
+
+Do not expose seed or diagnostic routes in production. Use the host shell or a one-off job for seed operations.
 
 Then add `muslimimpactors.americanmotivations.com` as the custom domain and create the DNS record requested by the host.
 
