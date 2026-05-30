@@ -48,6 +48,12 @@ const shouldPushSQLiteSchema =
 const shouldPushPostgresSchema = process.env.PAYLOAD_POSTGRES_PUSH === 'true'
 const shouldUsePostgresSSL =
   process.env.DATABASE_SSL === 'true' || databaseURL.includes('supabase.com')
+const payloadSecret = process.env.PAYLOAD_SECRET
+
+if (process.env.NODE_ENV === 'production' && !payloadSecret) {
+  throw new Error('PAYLOAD_SECRET is required in production.')
+}
+
 const dbAdapter = databaseURL.startsWith('postgres')
   ? postgresAdapter({
       pool: {
@@ -73,8 +79,17 @@ const dbAdapter = databaseURL.startsWith('postgres')
 export default buildConfig({
   admin: {
     user: Users.slug,
+    components: {
+      graphics: {
+        Icon: '/app/(payload)/components/MuslimImpactorsAdminBrand#MuslimImpactorsAdminIcon',
+        Logo: '/app/(payload)/components/MuslimImpactorsAdminBrand#MuslimImpactorsAdminLogo',
+      },
+    },
     importMap: {
       baseDir: path.resolve(dirname),
+    },
+    meta: {
+      titleSuffix: '- Muslim Impactors',
     },
   },
   cors: allowedOrigins,
@@ -102,7 +117,7 @@ export default buildConfig({
   ],
   editor: lexicalEditor(),
   globals: [SiteSettings],
-  secret: process.env.PAYLOAD_SECRET || '',
+  secret: payloadSecret || 'local-development-payload-secret',
   serverURL: siteURL,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

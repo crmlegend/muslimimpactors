@@ -31,6 +31,7 @@ On the first admin visit, Payload will ask you to create the first user. Give th
 - Public homepage: Muslim impact archive with an American Muslim launch dataset by default.
 - Search UX: interactive top search preview with grouped results.
 - Public routes: `/stories`, `/stories/[slug]`, `/articles`, `/articles/[slug]`, `/personalities`, `/personalities/[slug]`, `/muslims-in-history`, `/contributors`, `/sponsors`, `/themes`, `/timelines`, `/sources`, `/blog`, `/ask`, `/search`, and `/workflow`.
+- Public people routes read published Payload records first, then fall back to static seed data when CMS data is unavailable.
 - Internal social publishing: LinkedIn and X draft/schedule records.
 - Expert essay workflow: editor uploads Word/PDF, edits draft, checks Expert Approved, previews supported public routes, then rights and publisher gates apply.
 
@@ -125,8 +126,8 @@ Then add `muslimimpactors.americanmotivations.com` as the custom domain and crea
 
 ## Next Build Steps
 
+- Continue the Payload-backed public cutover beyond People into stories, articles, homepage data, and search.
 - Connect the search mega menu to Payload data across all published records.
-- Replace local prototype data with Payload-backed directory/detail pages.
 - Add media watermark background job.
 - Add document extraction for expert essay uploads.
 - Add pgvector embedding table and AI Q&A route.

@@ -13,7 +13,7 @@ type PersonalityMediaWorkspaceProps = {
   relatedStoryPeople: Personality[]
   relatedStories: StoryRow[]
   story: StoryRow
-  video: YoutubeVideo
+  video?: YoutubeVideo
 }
 
 const tabs = ['Related', 'Transcript', 'Biography', 'Info'] as const
@@ -60,23 +60,35 @@ export default function PersonalityMediaWorkspace({
       : activeChapter
   const activeTranscript =
     chapters[activeChapterIndex]?.transcript || chapters[activeChapter]?.transcript
-  const embedId = video.embedId
+  const embedId = video?.embedId
   const activeStartSeconds = chapters[activeChapterIndex]?.startSeconds ?? 0
-  const embedSrc = `https://www.youtube-nocookie.com/embed/${embedId}?start=${activeStartSeconds}&rel=0&modestbranding=1${
-    playAll || activeChapterIndex > 0 ? '&autoplay=1' : ''
-  }`
+  const embedSrc = embedId
+    ? `https://www.youtube-nocookie.com/embed/${embedId}?start=${activeStartSeconds}&rel=0&modestbranding=1${
+        playAll || activeChapterIndex > 0 ? '&autoplay=1' : ''
+      }`
+    : undefined
 
   return (
     <section className="speaker-workspace" id="media">
       <div className="speaker-player-column">
         <div className="speaker-video-frame">
-          <iframe
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            key={`${embedId}-${activeStartSeconds}-${playAll ? 'play' : 'pause'}`}
-            src={embedSrc}
-            title={video.title}
-          />
+          {embedSrc ? (
+            <iframe
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              key={`${embedId}-${activeStartSeconds}-${playAll ? 'play' : 'pause'}`}
+              src={embedSrc}
+              title={video?.title || story.story}
+            />
+          ) : (
+            <div className="video-placeholder">
+              <strong>Video awaiting editorial approval</strong>
+              <p>
+                This record is ready for transcript, source notes, and biography review. Editors
+                can attach a verified video in the CMS when rights and relevance are confirmed.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="speaker-video-meta">
@@ -86,8 +98,11 @@ export default function PersonalityMediaWorkspace({
               {person.name} <span>{person.role}</span>
             </p>
             <div className="speaker-video-source">
-              <strong>{video.source}</strong>
-              <span>{video.note}</span>
+              <strong>{video?.source || 'No approved video selected'}</strong>
+              <span>
+                {video?.note ||
+                  'Public pages show a neutral placeholder instead of embedding unrelated fallback video.'}
+              </span>
             </div>
           </div>
           <div className="speaker-actions" aria-label="Story actions">
@@ -102,6 +117,7 @@ export default function PersonalityMediaWorkspace({
             <button
               aria-pressed={playAll}
               className="play-all-button"
+              disabled={!embedSrc}
               onClick={() => {
                 setActiveChapter(0)
                 setPlayAll((value) => !value)

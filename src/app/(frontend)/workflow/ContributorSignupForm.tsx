@@ -1,6 +1,8 @@
 'use client'
 
-import React, { FormEvent, useState } from 'react'
+import React, { FormEvent, useRef, useState } from 'react'
+
+import { logVisitorEvent } from '../visitorEvents'
 
 const initialState = {
   affiliation: '',
@@ -20,8 +22,19 @@ export default function ContributorSignupForm() {
   const [form, setForm] = useState(initialState)
   const [status, setStatus] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const signupStarted = useRef(false)
+
+  const markSignupStarted = () => {
+    if (signupStarted.current) {
+      return
+    }
+
+    signupStarted.current = true
+    logVisitorEvent({ eventType: 'signup_start', targetType: 'contributor_application' })
+  }
 
   const updateField = (field: keyof typeof initialState, value: string) => {
+    markSignupStarted()
     setForm((current) => ({ ...current, [field]: value }))
   }
 

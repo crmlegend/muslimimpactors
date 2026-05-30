@@ -7,9 +7,12 @@ export type SearchItem = {
 }
 
 export type Personality = {
+  archiveTrack: ArchiveTrack
   category: string
   editorsPick: boolean
   era: string
+  externalVideoNote?: string
+  externalVideoSource?: string
   href: string
   imageUrl?: string
   initials: string
@@ -23,7 +26,15 @@ export type Personality = {
   todayRelevance?: string
   tone: string
   wikipediaTitle: string
+  youtubeEmbedId?: string
 }
+
+export type ArchiveTrack =
+  | 'american_civic_impact'
+  | 'golden_age_history'
+  | 'global_modern_impact'
+  | 'contributor'
+  | 'other'
 
 export type StoryRow = {
   body: string
@@ -84,14 +95,14 @@ const tones = [
   '#2C6F9E',
 ]
 
-const slugify = (value: string) =>
+export const slugify = (value: string) =>
   value
     .toLowerCase()
     .replace(/['’]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
 
-const initialsFor = (value: string) =>
+export const initialsFor = (value: string) =>
   value
     .replace(/^al-/i, '')
     .split(/\s+/)
@@ -528,6 +539,7 @@ const buildPersonalityList = ({
   const [name, era, role, category, region, summary] = row.split('|')
 
   return {
+    archiveTrack: theme === 'muslims_in_history' ? 'golden_age_history' : 'american_civic_impact',
     category,
     editorsPick: editorPickNames.has(name),
     era,
@@ -1101,10 +1113,50 @@ export const getPersonalityVideo = (person: Personality, story?: Pick<StoryRow, 
   }
 }
 
-export const getPersonalityStory = (person: Personality) =>
-  storyRows.find((story) => story.name === person.name) || {
+export const getApprovedPersonalityVideo = (
+  person: Personality,
+  story?: Pick<StoryRow, 'embedId'>,
+) => {
+  if (story?.embedId && videoByEmbedId[story.embedId]) {
+    return {
+      ...videoByEmbedId[story.embedId],
+      note: 'Story-specific YouTube embed connected to this page.',
+    }
+  }
+
+  if (person.youtubeEmbedId) {
+    const video = videoByEmbedId[person.youtubeEmbedId]
+
+    return {
+      embedId: person.youtubeEmbedId,
+      language: 'English' as const,
+      note:
+        person.externalVideoNote ||
+        video?.note ||
+        'Approved external video selected by editors for this public record.',
+      source: person.externalVideoSource || video?.source || 'Approved external video',
+      title: video?.title || `${person.name} video reference`,
+      topic: video?.topic || person.category,
+    }
+  }
+
+  const directTopic = personalityVideoTopics[person.name]
+  const directVideo = directTopic ? videoByTopic[directTopic] : undefined
+
+  if (!directVideo) {
+    return undefined
+  }
+
+  return {
+    ...directVideo,
+    note: 'Person-specific seed embed. Replace from the CMS if the editorial team approves a better source.',
+  }
+}
+
+export const getPersonalityStory = (person: Personality): StoryRow => {
+  const approvedVideo = getApprovedPersonalityVideo(person)
+  const fallbackStory: StoryRow = {
     body: `${person.name} story module with video, transcript, source notes, and related archive records.`,
-    embedId: getPersonalityVideo(person).embedId,
     href: `${person.href}#media`,
     length: '03:20',
     name: person.name,
@@ -1113,6 +1165,13 @@ export const getPersonalityStory = (person: Personality) =>
     story: `${person.name}: life, work, and legacy`,
     summary: person.summary,
   }
+
+  if (approvedVideo?.embedId) {
+    fallbackStory.embedId = approvedVideo.embedId
+  }
+
+  return storyRows.find((story) => story.name === person.name) || fallbackStory
+}
 
 export const getStoryChapters = (person: Personality): StoryChapter[] =>
   (chapterTemplates[person.name] || defaultChapters(person)).map((chapter, index) => ({

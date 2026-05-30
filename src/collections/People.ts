@@ -24,7 +24,7 @@ export const People: CollectionConfig = {
     update: internalOnly,
   },
   admin: {
-    defaultColumns: ['name', 'personType', 'workflowStatus'],
+    defaultColumns: ['name', 'archiveTrack', 'personType', 'workflowStatus'],
     description:
       'Create public personality dossiers for American Muslims, historical Muslim figures, contributors, and reviewers. Use the Preview button before publishing.',
     preview: previewBySlug('/personalities'),
@@ -74,6 +74,23 @@ export const People: CollectionConfig = {
       ],
       required: true,
       admin: { description: 'Choose the main role used for filtering and editorial routing.' },
+    },
+    {
+      name: 'archiveTrack',
+      type: 'select',
+      defaultValue: 'other',
+      options: [
+        { label: 'American civic impact', value: 'american_civic_impact' },
+        { label: 'Golden Age history', value: 'golden_age_history' },
+        { label: 'Global modern impact', value: 'global_modern_impact' },
+        { label: 'Contributor', value: 'contributor' },
+        { label: 'Other', value: 'other' },
+      ],
+      required: true,
+      admin: {
+        description:
+          'Controls homepage rails, public filters, and editorial separation between modern civic profiles, Golden Age figures, global modern figures, and contributors.',
+      },
     },
     {
       name: 'aliases',

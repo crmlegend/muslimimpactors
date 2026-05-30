@@ -4,15 +4,15 @@ import React from 'react'
 
 import ArchiveHeader from '../../ArchiveHeader'
 import PersonalityMediaWorkspace from '../../PersonalityMediaWorkspace'
+import { getPublicPersonalities, getPublicPersonalityBySlug } from '../../content'
 import {
+  getApprovedPersonalityVideo,
   getPersonalityDetailSections,
   getPersonalityReferences,
   getPersonalityStory,
-  getPersonalityVideo,
   getRelatedStoriesForPerson,
   getSponsorForRecord,
   getStoryChapters,
-  personalities,
 } from '../../archiveData'
 
 type PersonalityDetailPageProps = {
@@ -21,13 +21,11 @@ type PersonalityDetailPageProps = {
   }>
 }
 
-export function generateStaticParams() {
-  return personalities.map((person) => ({ slug: person.slug }))
-}
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: PersonalityDetailPageProps) {
   const { slug } = await params
-  const person = personalities.find((item) => item.slug === slug)
+  const person = await getPublicPersonalityBySlug(slug)
 
   if (!person) {
     return {}
@@ -41,19 +39,20 @@ export async function generateMetadata({ params }: PersonalityDetailPageProps) {
 
 export default async function PersonalityDetailPage({ params }: PersonalityDetailPageProps) {
   const { slug } = await params
-  const person = personalities.find((item) => item.slug === slug)
+  const person = await getPublicPersonalityBySlug(slug)
 
   if (!person) {
     notFound()
   }
 
+  const personalities = await getPublicPersonalities()
   const relatedPeople = personalities
     .filter((item) => item.category === person.category && item.slug !== person.slug)
     .slice(0, 6)
   const detailSections = getPersonalityDetailSections(person)
   const references = getPersonalityReferences(person)
   const story = getPersonalityStory(person)
-  const video = getPersonalityVideo(person, story)
+  const video = getApprovedPersonalityVideo(person, story)
   const sponsor = getSponsorForRecord(person.slug)
   const chapters = getStoryChapters(person)
   const relatedStories = getRelatedStoriesForPerson(person)

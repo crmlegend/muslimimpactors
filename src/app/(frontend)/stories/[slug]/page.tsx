@@ -5,11 +5,11 @@ import React from 'react'
 import ArchiveHeader from '../../ArchiveHeader'
 import PersonalityMediaWorkspace from '../../PersonalityMediaWorkspace'
 import {
+  getApprovedPersonalityVideo,
   getRelatedStoriesForPerson,
   getSponsorForRecord,
   getStoryChapters,
   getStoryDetailSections,
-  getPersonalityVideo,
   personalities,
   sourceRows,
   storyRows,
@@ -52,7 +52,7 @@ export default async function StoryDetailPage({ params }: StoryDetailPageProps) 
     notFound()
   }
 
-  const video = getPersonalityVideo(person, story)
+  const video = getApprovedPersonalityVideo(person, story)
   const sponsor = getSponsorForRecord(story.slug)
   const chapters = getStoryChapters(person)
   const storySections = getStoryDetailSections(story, person)

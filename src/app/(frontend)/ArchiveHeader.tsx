@@ -1,16 +1,18 @@
 'use client'
 
 import Link from 'next/link'
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 
 import AskArchiveDemo from './ask/AskArchiveDemo'
 import { searchGroups, searchItems } from './archiveData'
+import { logVisitorEvent } from './visitorEvents'
 
 export default function ArchiveHeader() {
   const [helpOpen, setHelpOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
+  const lastLoggedSearch = useRef('')
 
   const filteredResults = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -24,6 +26,23 @@ export default function ArchiveHeader() {
       return haystack.includes(normalizedQuery)
     })
   }, [query])
+
+  const handleSearchChange = (value: string) => {
+    setQuery(value)
+
+    const normalizedQuery = value.trim()
+
+    if (normalizedQuery.length < 2 || normalizedQuery === lastLoggedSearch.current) {
+      return
+    }
+
+    lastLoggedSearch.current = normalizedQuery
+    logVisitorEvent({
+      eventType: 'search',
+      metadata: { query: normalizedQuery },
+      targetType: 'archive_search',
+    })
+  }
 
   return (
     <header className={`archive-header ${mobileMenuOpen ? 'menu-open' : ''}`}>
@@ -61,9 +80,18 @@ export default function ArchiveHeader() {
       </nav>
 
       <div className="header-actions" aria-label="Account and support links">
-        <Link href="/workflow#register-interest">Register</Link>
+        <Link
+          href="/workflow#register-interest"
+          onClick={() => logVisitorEvent({ eventType: 'signup_start', targetType: 'workflow' })}
+        >
+          Register
+        </Link>
         <Link href="/admin">Sign in</Link>
-        <Link className="donate-link" href="/donate">
+        <Link
+          className="donate-link"
+          href="/donate"
+          onClick={() => logVisitorEvent({ eventType: 'donate_click', targetType: 'donate' })}
+        >
           Donate
         </Link>
       </div>
@@ -74,7 +102,7 @@ export default function ArchiveHeader() {
           <input
             id="archive-search"
             onBlur={() => window.setTimeout(() => setSearchFocused(false), 140)}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => handleSearchChange(event.target.value)}
             onFocus={() => setSearchFocused(true)}
             placeholder="Search personalities, eras, works, places..."
             type="search"
@@ -97,7 +125,19 @@ export default function ArchiveHeader() {
                     <h2>{group}</h2>
                     {groupResults.length > 0 ? (
                       groupResults.map((item) => (
-                        <Link className="result-row" href={item.href} key={item.title}>
+                        <Link
+                          className="result-row"
+                          href={item.href}
+                          key={item.title}
+                          onClick={() =>
+                            logVisitorEvent({
+                              eventType: item.type === 'Personality' ? 'profile_open' : 'search',
+                              metadata: { query, resultTitle: item.title, resultType: item.type },
+                              targetSlug: item.href.split('/').filter(Boolean).pop(),
+                              targetType: item.type.toLowerCase(),
+                            })
+                          }
+                        >
                           <span>{item.title}</span>
                           <small>{item.meta}</small>
                         </Link>
@@ -114,7 +154,18 @@ export default function ArchiveHeader() {
                 Results include personalities, civic work, historical context, sources, and
                 contributors.
               </span>
-              <Link href="/search">Open full search</Link>
+              <Link
+                href="/search"
+                onClick={() =>
+                  logVisitorEvent({
+                    eventType: 'search',
+                    metadata: { query, action: 'open_full_search' },
+                    targetType: 'archive_search',
+                  })
+                }
+              >
+                Open full search
+              </Link>
             </div>
           </div>
         ) : null}

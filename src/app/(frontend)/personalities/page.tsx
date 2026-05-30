@@ -3,9 +3,17 @@ import React from 'react'
 
 import ArchiveHeader from '../ArchiveHeader'
 import WikipediaPortrait from '../WikipediaPortrait'
-import { americanMuslimCategories, americanMuslimPersonalities } from '../archiveData'
+import { getPersonalityCategoryURL, getPublicPersonalities } from '../content'
 
-export default function PersonalitiesPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function PersonalitiesPage() {
+  const personalities = await getPublicPersonalities()
+  const publicPersonalities = personalities.filter(
+    (person) => person.archiveTrack !== 'golden_age_history' && person.archiveTrack !== 'contributor',
+  )
+  const categories = Array.from(new Set(publicPersonalities.map((person) => person.category))).sort()
+
   return (
     <div className="archive-shell">
       <ArchiveHeader />
@@ -24,15 +32,15 @@ export default function PersonalitiesPage() {
         </section>
 
         <section className="theme-list large" aria-label="Personality categories">
-          {americanMuslimCategories.map((category) => (
-            <Link href={`/search?category=${encodeURIComponent(category)}`} key={category}>
+          {categories.map((category) => (
+            <Link href={getPersonalityCategoryURL(category)} key={category}>
               {category}
             </Link>
           ))}
         </section>
 
         <section className="directory-grid personality-directory">
-          {americanMuslimPersonalities.map((person) => (
+          {publicPersonalities.map((person) => (
             <Link
               className="directory-card portrait-directory-card"
               href={person.href}

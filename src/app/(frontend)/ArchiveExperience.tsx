@@ -1,22 +1,22 @@
 'use client'
 
 import Link from 'next/link'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import ArchiveHeader from './ArchiveHeader'
 import {
   canFetchWikipediaSummary,
   editorsPicks,
   featuredPersonality,
+  getApprovedPersonalityVideo,
   getPersonalityStory,
-  getPersonalityVideo,
   getRelatedStoriesForPerson,
   historicalPersonalities,
   popularPersonalities,
   sponsorRows,
   storyRows,
-  youtubeVideos,
 } from './archiveData'
+import { logVisitorEvent } from './visitorEvents'
 
 type ArchiveExperienceSettings = {
   brandColors?: {
@@ -196,43 +196,8 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
     : null
   const selectedStory = selectedPerson ? getPersonalityStory(selectedPerson) : null
   const selectedVideo =
-    selectedPerson && selectedStory ? getPersonalityVideo(selectedPerson, selectedStory) : null
+    selectedPerson && selectedStory ? getApprovedPersonalityVideo(selectedPerson, selectedStory) : null
   const selectedRelatedStories = selectedPerson ? getRelatedStoriesForPerson(selectedPerson) : []
-
-  const logVisitorEvent = useCallback(
-    (event: {
-      eventType: string
-      metadata?: string
-      targetSlug?: string
-      targetType?: string
-    }) => {
-      if (typeof window === 'undefined') {
-        return
-      }
-
-      const storageKey = 'muslim-impactors-visitor-id'
-      const existingId = window.localStorage.getItem(storageKey)
-      const visitorId =
-        existingId ||
-        `mi-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
-
-      if (!existingId) {
-        window.localStorage.setItem(storageKey, visitorId)
-      }
-
-      void fetch('/api/visitor-event', {
-        body: JSON.stringify({
-          ...event,
-          path: window.location.pathname,
-          visitorId,
-        }),
-        headers: { 'Content-Type': 'application/json' },
-        keepalive: true,
-        method: 'POST',
-      }).catch(() => undefined)
-    },
-    [],
-  )
 
   useEffect(() => {
     const controller = new AbortController()
@@ -273,7 +238,7 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
 
   useEffect(() => {
     logVisitorEvent({ eventType: 'page_view' })
-  }, [logVisitorEvent])
+  }, [])
 
   return (
     <div className="archive-shell stories" style={brandStyle}>
@@ -286,7 +251,18 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
             {homepageCopy.showLeftRailBody ? <p>{homepageCopy.leftRailBody}</p> : null}
             <div className="golden-age-thumb-grid">
               {goldenAgePeople.map((person) => (
-                <Link className="golden-age-card" href={person.href} key={person.slug}>
+                <Link
+                  className="golden-age-card"
+                  href={person.href}
+                  key={person.slug}
+                  onClick={() =>
+                    logVisitorEvent({
+                      eventType: 'profile_open',
+                      targetSlug: person.slug,
+                      targetType: 'personality',
+                    })
+                  }
+                >
                   <span
                     className={`golden-age-thumb ${
                       portraitImages[person.slug] || person.imageUrl ? 'has-photo' : ''
@@ -369,7 +345,7 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
                 })}
               </div>
               <p className="portrait-wall-caption">
-                Hover over a portrait for a record preview. Click any portrait to open the video
+                Hover over a portrait for a record preview. Click any portrait to open the story
                 card.
               </p>
             </div>
@@ -412,7 +388,17 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
               <span>Editor&apos;s Choice</span>
               <h2>Featured profile selected by editors</h2>
             </div>
-            <Link className="editor-choice-feature" href={editorChoicePerson.href}>
+            <Link
+              className="editor-choice-feature"
+              href={editorChoicePerson.href}
+              onClick={() =>
+                logVisitorEvent({
+                  eventType: 'profile_open',
+                  targetSlug: editorChoicePerson.slug,
+                  targetType: 'personality',
+                })
+              }
+            >
               <span
                 className={`editor-choice-image ${editorChoiceImage ? 'has-photo' : ''}`}
                 style={
@@ -441,19 +427,25 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
                 <h2>Documentary references selected for review</h2>
               </div>
               <div className="video-grid">
-                {recommendedStories.slice(0, 3).map((story, index) => {
+                {recommendedStories.slice(0, 3).map((story) => {
                   const person = popularPersonalities.find((item) => item.name === story.name)
-                  const video = person ? getPersonalityVideo(person, story) : youtubeVideos[index]
+                  const video = person ? getApprovedPersonalityVideo(person, story) : undefined
 
                   return (
                     <article key={story.slug}>
                       <div className="video-frame">
-                        <iframe
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          allowFullScreen
-                          src={`https://www.youtube-nocookie.com/embed/${video?.embedId || youtubeVideos[0].embedId}`}
-                          title={video?.title || story.story}
-                        />
+                        {video ? (
+                          <iframe
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                            src={`https://www.youtube-nocookie.com/embed/${video.embedId}`}
+                            title={video.title}
+                          />
+                        ) : (
+                          <div className="video-placeholder compact">
+                            <strong>Awaiting approved video</strong>
+                          </div>
+                        )}
                       </div>
                       <span>{video?.topic || story.role}</span>
                       <h3>{story.story}</h3>
@@ -472,7 +464,17 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
             </div>
             <div className="ranked-list">
               {popularPersonalities.slice(0, 8).map((person, index) => (
-                <Link href={person.href} key={person.slug}>
+                <Link
+                  href={person.href}
+                  key={person.slug}
+                  onClick={() =>
+                    logVisitorEvent({
+                      eventType: 'profile_open',
+                      targetSlug: person.slug,
+                      targetType: 'personality',
+                    })
+                  }
+                >
                   <span>{String(index + 1).padStart(2, '0')}</span>
                   <strong>{person.name}</strong>
                   <small>{person.category}</small>
@@ -506,12 +508,22 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
             </button>
             <div className="story-preview-main">
               <div className="story-preview-video">
-                <iframe
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  src={`https://www.youtube-nocookie.com/embed/${selectedVideo?.embedId || youtubeVideos[0].embedId}`}
-                  title={selectedVideo?.title || selectedStory.story}
-                />
+                {selectedVideo ? (
+                  <iframe
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    src={`https://www.youtube-nocookie.com/embed/${selectedVideo.embedId}`}
+                    title={selectedVideo.title}
+                  />
+                ) : (
+                  <div className="video-placeholder">
+                    <strong>Video awaiting editorial approval</strong>
+                    <p>
+                      Editors can attach a verified video once source, rights, and relevance checks
+                      are complete.
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="story-preview-copy">
                 <h2 id="story-preview-title">{selectedStory.story}</h2>

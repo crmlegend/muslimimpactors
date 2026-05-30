@@ -471,6 +471,10 @@ export interface Person {
     | 'author'
     | 'institutional_contact'
     | 'other';
+  /**
+   * Controls homepage rails, public filters, and editorial separation between modern civic profiles, Golden Age figures, global modern figures, and contributors.
+   */
+  archiveTrack: 'american_civic_impact' | 'golden_age_history' | 'global_modern_impact' | 'contributor' | 'other';
   aliases?:
     | {
         alias: string;
@@ -2242,6 +2246,7 @@ export interface PeopleSelect<T extends boolean = true> {
   slug?: T;
   displayTitle?: T;
   personType?: T;
+  archiveTrack?: T;
   aliases?:
     | T
     | {

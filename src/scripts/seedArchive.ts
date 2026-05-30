@@ -708,6 +708,8 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
     const record = await upsertBySlug({
       collection: 'people',
       data: {
+        archiveTrack:
+          person.theme === 'muslims_in_history' ? 'golden_age_history' : 'american_civic_impact',
         editorApproved: false,
         eraLabel: person.era,
         externalVideoNote: video.note,
@@ -752,6 +754,7 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
     const record = await upsertBySlug({
       collection: 'people',
       data: {
+        archiveTrack: 'contributor',
         editorApproved: false,
         name: contributor.name,
         personType: 'expert_contributor',
