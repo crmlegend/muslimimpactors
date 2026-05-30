@@ -25,6 +25,10 @@ import {
   storyRows,
   workflowTests,
 } from '../app/(frontend)/archiveData'
+import {
+  getAmericanCivicProfileUpdate,
+  noApprovedVideoNote,
+} from '../data/americanCivicProfiles'
 
 const publicSiteUrl = (
   process.env.NEXT_PUBLIC_SITE_URL || 'https://muslimimpactors.americanmotivations.com'
@@ -91,17 +95,22 @@ const personTypeFor = (role: string) => {
   return 'scholar'
 }
 
-const richText = (text: string) => ({
-  root: {
-    children: [
-      {
+const richText = (text: string) => {
+  const paragraphs = text
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+
+  return {
+    root: {
+      children: paragraphs.map((paragraph) => ({
         children: [
           {
             detail: 0,
             format: 0,
             mode: 'normal',
             style: '',
-            text,
+            text: paragraph,
             type: 'text',
             version: 1,
           },
@@ -111,15 +120,15 @@ const richText = (text: string) => ({
         indent: 0,
         type: 'paragraph',
         version: 1,
-      },
-    ],
-    direction: 'ltr',
-    format: '',
-    indent: 0,
-    type: 'root',
-    version: 1,
-  },
-})
+      })),
+      direction: 'ltr',
+      format: '',
+      indent: 0,
+      type: 'root',
+      version: 1,
+    },
+  }
+}
 
 const upsertByField = async ({
   collection,
@@ -699,10 +708,12 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
 
   for (const person of personalities) {
     const video = getPersonalityVideo(person)
+    const profileUpdate = getAmericanCivicProfileUpdate(person.slug)
     const detailSections = getPersonalityDetailSections(person)
     const publicReferences = [
       `Wikipedia starter reference: https://en.wikipedia.org/wiki/${person.wikipediaTitle}`,
       `WikiShia search starter: https://en.wikishia.net/index.php?search=${encodeURIComponent(person.name)}`,
+      ...(profileUpdate?.sourceUrls.map((url) => `Curated profile source: ${url}`) || []),
     ]
 
     const record = await upsertBySlug({
@@ -710,14 +721,15 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
       data: {
         archiveTrack:
           person.theme === 'muslims_in_history' ? 'golden_age_history' : 'american_civic_impact',
-        editorApproved: false,
+        editorApproved: Boolean(profileUpdate),
         eraLabel: person.era,
-        externalVideoNote: video.note,
-        externalVideoSource: video.source,
-        externalVideoUrl: `https://www.youtube.com/watch?v=${video.embedId}`,
+        externalVideoNote: video?.note || noApprovedVideoNote,
+        externalVideoSource: video?.source || null,
+        externalVideoUrl: video?.embedId ? `https://www.youtube.com/watch?v=${video.embedId}` : null,
+        fullBio: profileUpdate ? richText(profileUpdate.fullBio.join('\n\n')) : undefined,
         nationality: person.region,
         name: person.name,
-        personType: personTypeFor(person.role),
+        personType: profileUpdate?.personType || personTypeFor(person.role),
         primaryWorks: `${person.summary}\n\nStarter references:\n${publicReferences.join('\n')}`,
         relatedTopics: topicIds.get(person.category) ? [topicIds.get(person.category)] : [],
         relatedPlaces: [placeIds.get(placeSlugForRegion(person.region))].filter(Boolean),
@@ -740,8 +752,8 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
           tagIds.get('open-license-starter-reference'),
         ].filter(Boolean),
         occupations: [occupationIds.get(occupationSlugForRole(person.role))].filter(Boolean),
-        workflowStatus: 'draft',
-        youtubeEmbedId: video.embedId,
+        workflowStatus: profileUpdate ? 'published' : 'draft',
+        youtubeEmbedId: video?.embedId || null,
       },
       payload,
     })
@@ -794,9 +806,9 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
       collection: 'stories',
       data: {
         durationSeconds: durationToSeconds(story.length),
-        externalVideoNote: video.note,
-        externalVideoSource: video.source,
-        externalVideoUrl: `https://www.youtube.com/watch?v=${video.embedId}`,
+        externalVideoNote: video?.note || noApprovedVideoNote,
+        externalVideoSource: video?.source || null,
+        externalVideoUrl: video?.embedId ? `https://www.youtube.com/watch?v=${video.embedId}` : null,
         format: 'video',
         body: richText(
           storySections
@@ -834,7 +846,7 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
           text: chapter.transcript,
         })),
         workflowStatus: 'draft',
-        youtubeEmbedId: video.embedId,
+        youtubeEmbedId: video?.embedId || null,
       },
       payload,
     })

@@ -65,31 +65,7 @@ const uniqueBySlug = <T extends { slug: string }>(items: T[]) => {
 
 const isDefined = <T,>(value: T | null | undefined): value is T => Boolean(value)
 
-const professionalFeatureSlugs = new Set([
-  'keith-ellison',
-  'ilhan-omar',
-  'rashida-tlaib',
-  'andre-carson',
-  'huma-abedin',
-  'nusrat-choudhury',
-  'zahid-quraishi',
-  'hamdi-ulukaya',
-  'shahid-khan',
-  'jawed-karim',
-  'aziz-sancar',
-  'muhammad-suhail-zubairy',
-  'zia-mian',
-  'ayesha-jalal',
-  'talal-asad',
-  'akbar-ahmed',
-  'fareed-zakaria',
-  'khaled-hosseini',
-  'laila-lalami',
-  'humayun-khan',
-  'kareem-rashad-sultan-khan',
-  'james-yee',
-  'ahmed-kousay-al-taie',
-])
+const professionalFeatureSlugs = new Set(popularPersonalities.map((person) => person.slug))
 
 export default function ArchiveExperience({ settings }: ArchiveExperienceProps) {
   const [portraitImages, setPortraitImages] = useState<Record<string, string>>({})

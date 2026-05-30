@@ -50,6 +50,10 @@ export default async function PersonalityDetailPage({ params }: PersonalityDetai
     .filter((item) => item.category === person.category && item.slug !== person.slug)
     .slice(0, 6)
   const detailSections = getPersonalityDetailSections(person)
+  const fullBioParagraphs = person.fullBio
+    ?.split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
   const references = getPersonalityReferences(person)
   const story = getPersonalityStory(person)
   const video = getApprovedPersonalityVideo(person, story)
@@ -89,6 +93,15 @@ export default async function PersonalityDetailPage({ params }: PersonalityDetai
 
         <section className="two-column-content">
           <article>
+            {fullBioParagraphs?.length ? (
+              <section className="profile-full-bio">
+                <h2>Full Bio</h2>
+                {fullBioParagraphs.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </section>
+            ) : null}
+
             <h2>Overview</h2>
             <div className="detail-section-list">
               {detailSections.map((section) => (

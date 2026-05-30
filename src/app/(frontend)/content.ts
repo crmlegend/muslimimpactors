@@ -69,6 +69,38 @@ const toneForSlug = (slug: string) => {
 const themeForTrack = (archiveTrack: ArchiveTrack): Personality['theme'] =>
   archiveTrack === 'golden_age_history' ? 'muslims_in_history' : 'american_muslims'
 
+const lexicalText = (node: unknown): string => {
+  if (!node || typeof node !== 'object') {
+    return ''
+  }
+
+  const value = node as { children?: unknown; text?: unknown }
+
+  if (typeof value.text === 'string') {
+    return value.text
+  }
+
+  if (Array.isArray(value.children)) {
+    return value.children.map(lexicalText).join('')
+  }
+
+  return ''
+}
+
+const richTextToPlainText = (value: Person['fullBio']) => {
+  const root = value?.root as { children?: unknown } | undefined
+
+  if (!Array.isArray(root?.children)) {
+    return undefined
+  }
+
+  const paragraphs = root.children
+    .map((child) => lexicalText(child).trim())
+    .filter(Boolean)
+
+  return paragraphs.length ? paragraphs.join('\n\n') : undefined
+}
+
 const mapCMSPersonality = (person: Person, index: number): Personality => {
   const staticMatch = staticPersonalities.find((item) => item.slug === person.slug)
   const archiveTrack = (person.archiveTrack || staticMatch?.archiveTrack || 'other') as ArchiveTrack
@@ -87,6 +119,7 @@ const mapCMSPersonality = (person: Person, index: number): Personality => {
     era: person.eraLabel || person.birthDateText || staticMatch?.era || 'Current',
     externalVideoNote: person.externalVideoNote || undefined,
     externalVideoSource: person.externalVideoSource || undefined,
+    fullBio: richTextToPlainText(person.fullBio) || staticMatch?.fullBio,
     href: `/personalities/${person.slug}`,
     imageUrl: mediaURL(person.portrait) || staticMatch?.imageUrl,
     initials: initialsFor(person.name),

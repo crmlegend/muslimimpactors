@@ -700,6 +700,13 @@ Production migration:
 - `src/migrations/index.ts` registers the migration for Payload `prodMigrations`.
 - Keep `PAYLOAD_POSTGRES_PUSH=false` so production schema changes move through committed migrations rather than automatic push.
 
+Bulk archive-track/data updates:
+
+- Payload can edit `archiveTrack` per People record. This project does not currently add a custom admin bulk-action UI for that field, so true bulk updates should use a committed migration or seed patch so the change is reviewable, repeatable, and deployable.
+- American civic impact profile enrichment is now centralized in `src/data/americanCivicProfiles.ts`.
+- Migration `20260530_153000_curate_american_civic_profiles` updates all 36 American civic impact profiles with curated Full Bio copy, corrected broad `personType` values, source URLs in `primaryWorks`, and a conservative video policy.
+- The homepage civic/professional portrait set is driven by the 36-name static American civic profile order in `archiveData.ts`; the configured homepage featured-personality guard follows that same pool.
+
 ## 12. Sponsor Workflow
 
 Sponsor records should support both public recognition and internal accountability.
@@ -738,6 +745,8 @@ Current public behavior:
 - If no verified video exists, show an empty video placeholder with neutral wording.
 - Do not embed random or non-English videos just to fill space.
 - Store source/channel/rights notes for every external video.
+- Generic category-level video fallbacks are disabled for public personality/story pages. Story embeds are only trusted when they are person-specific or when a CMS record has an approved `youtubeEmbedId`.
+- Current curated video exception: Jawed Karim uses `jNQXAC9IVRw` (`Me at the zoo`) as a verified platform-history video tied directly to his YouTube co-founder record. Most other American civic profiles intentionally show the placeholder until a specific source/relevance check is completed.
 - AI-generated video must have explicit public AI labeling.
 
 ## 14. Homepage Control Model
@@ -862,6 +871,7 @@ Current deployment note:
 - Commit `06dd404` adds the hydration-warning suppression/documentation pass after the May 30, 2026 local admin screenshot.
 - The May 30, 2026 Railway failure `Failed to collect page data for /api/visitor-event` was caused by `PAYLOAD_SECRET` being unavailable during the Docker build stage. The app now permits a build-only placeholder secret during `NEXT_PHASE=phase-production-build` while still requiring the real secret at runtime.
 - The May 30, 2026 live admin screenshot showing `Nothing found` at `/admin/globals/site-settings` was caused by production Postgres missing the `site_settings` global tables. Migration `20260530_142700_create_site_settings_global` creates the global table, sponsor-slot array table, relationship table, default settings row, constraints, and indexes.
+- The American civic impact content pass adds migration `20260530_153000_curate_american_civic_profiles`, the shared curated profile data file, Full Bio rendering on public personality pages, corrected person-type data for the 36 civic profiles, and removal of generic American Muslim video embeds from people/story records.
 - If the live homepage has the reviewer layout but `/admin/login` still says `Login - Payload`, Railway is likely still serving an older build for the admin route or the deploy has not fully rolled forward. Check Railway build/deploy logs for the latest GitHub SHA before changing code.
 
 ## 18. QA Checklist
@@ -914,7 +924,7 @@ These items were open at the time this document was created:
 1. Enrich sponsor schema and sponsor pages with verified claims, CTA blocks, source-backed public details, and internal research notes.
 2. Continue CMS-to-frontend cutover beyond People into Stories, Articles, search, and homepage data.
 3. Verify `Homepage & Branding` loads and saves for non-technical admin users after each Payload schema/admin change.
-4. Add or verify relevant videos per personality/story; placeholders now appear where no approved video exists.
+4. Continue adding verified person-specific videos per personality/story. The system now shows placeholders where no approved video exists and avoids generic fallback embeds.
 5. Expand visitor-event coverage where new public tasks are added.
 6. Keep `PAYLOAD_POSTGRES_PUSH=false` and use migrations for production schema changes.
 

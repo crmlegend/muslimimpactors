@@ -1,3 +1,9 @@
+import {
+  getAmericanCivicProfileFullBio,
+  getAmericanCivicProfileUpdate,
+  noApprovedVideoNote,
+} from '../../data/americanCivicProfiles'
+
 export type SearchItem = {
   href: string
   meta: string
@@ -13,6 +19,7 @@ export type Personality = {
   era: string
   externalVideoNote?: string
   externalVideoSource?: string
+  fullBio?: string
   href: string
   imageUrl?: string
   initials: string
@@ -537,12 +544,18 @@ const buildPersonalityList = ({
 }): Personality[] =>
   rows.map((row, index) => {
   const [name, era, role, category, region, summary] = row.split('|')
+  const slug = slugify(name)
+  const profileUpdate = getAmericanCivicProfileUpdate(slug)
+  const video = profileUpdate?.video
 
   return {
     archiveTrack: theme === 'muslims_in_history' ? 'golden_age_history' : 'american_civic_impact',
     category,
     editorsPick: editorPickNames.has(name),
     era,
+    externalVideoNote: video?.note || (profileUpdate ? noApprovedVideoNote : undefined),
+    externalVideoSource: video?.source,
+    fullBio: getAmericanCivicProfileFullBio(slug),
     href: `/personalities/${slugify(name)}`,
     imageUrl: portraitImageOverrides[name],
     initials: initialsFor(name),
@@ -556,6 +569,7 @@ const buildPersonalityList = ({
     todayRelevance: todayRelevanceFor(name, theme),
     tone: tones[index % tones.length],
     wikipediaTitle: wikipediaTitleFor(name),
+    youtubeEmbedId: video?.youtubeEmbedId,
   }
   })
 
@@ -584,6 +598,11 @@ export const getWikiShiaSearchUrl = (person: Pick<Personality, 'name'>) =>
 export const getPersonalityReferences = (person: Personality) =>
   person.theme === 'american_muslims'
     ? [
+        ...(getAmericanCivicProfileUpdate(person.slug)?.sourceUrls.map((url, index) => ({
+          label: `Curated biography source ${index + 1}`,
+          note: 'Verified source used for the Full Bio and civic-impact data refresh.',
+          url,
+        })) || []),
         {
           label: 'Wikipedia biography',
           note: 'Open encyclopedia reference; import requires attribution and compatible licensing.',
@@ -689,6 +708,19 @@ const homepageSpotlightNames = [
   'Fareed Zakaria',
   'Khaled Hosseini',
   'Laila Lalami',
+  'Reza Aslan',
+  'G. Willow Wilson',
+  'Shirin Neshat',
+  'Shahzia Sikander',
+  'Mahershala Ali',
+  'Dave Chappelle',
+  'Hasan Minhaj',
+  'Yasiin Bey',
+  'Iman',
+  'Ahmad Jamal',
+  'Muhammad Ali',
+  'Malcolm X',
+  'Kareem Abdul-Jabbar',
 ]
 
 export const popularPersonalities = homepageSpotlightNames
@@ -1029,98 +1061,44 @@ export const youtubeVideos: YoutubeVideo[] = [
     title: 'Mansa Musa and Islam in Africa: Crash Course World History',
     topic: 'Mansa Musa',
   },
+  {
+    embedId: 'jNQXAC9IVRw',
+    language: 'English',
+    note:
+      'Verified platform-history video connected to Jawed Karim as a YouTube co-founder and the first public YouTube upload.',
+    source: 'YouTube / jawed',
+    title: 'Me at the zoo',
+    topic: 'Jawed Karim',
+  },
 ]
 
 const videoByEmbedId = Object.fromEntries(youtubeVideos.map((video) => [video.embedId, video]))
 const videoByTopic = Object.fromEntries(youtubeVideos.map((video) => [video.topic, video]))
 
 const personalityVideoTopics: Record<string, string> = {
-  'Ahmed Kousay al-Taie': 'American Muslims in the United States',
   'Al-Biruni': 'Al-Biruni',
   'Al-Jazari': 'Al-Jazari',
-  'Aziz Sancar': 'American Muslims in the United States',
   'Fatima al-Fihri': 'Fatima al-Fihri',
-  'Hamdi Ulukaya': 'American Muslims in the United States',
-  'Humayun Khan': 'American Muslims in the United States',
   'Ibn Khaldun': 'Ibn Khaldun',
   'Ibn Sina': 'Ibn Sina',
-  'Kareem Abdul-Jabbar': 'American Muslims in the United States',
-  'Malcolm X': 'American Muslims in the United States',
+  'Jawed Karim': 'Jawed Karim',
   'Mansa Musa': 'Mansa Musa',
   'Mimar Sinan': 'Mimar Sinan',
   'Muhammad Ali': 'Muhammad Ali',
-  'Shirin Neshat': 'American Muslims in the United States',
-}
-
-const categoryVideoTopics: Record<string, string> = {
-  'Architecture and art': 'House of Wisdom',
-  'Astronomy and mathematics': 'Al-Biruni',
-  'Calligraphy and book arts': 'House of Wisdom',
-  'Education and reform': 'House of Wisdom',
-  'Geography and travel': 'Al-Biruni',
-  'Hadith scholarship': 'House of Wisdom',
-  'History and historiography': 'Ibn Khaldun',
-  'Law and governance': 'Ibn Khaldun',
-  'Libraries and translation': 'House of Wisdom',
-  'Literature and language': 'House of Wisdom',
-  'Literature and poetry': 'House of Wisdom',
-  'Medicine and hospitals': 'Ibn Sina',
-  'Medicine and philosophy': 'Ibn Sina',
-  'Philosophy and law': 'Ibn Khaldun',
-  'Philosophy and theology': 'House of Wisdom',
-  'Philosophy and translation': 'House of Wisdom',
-  'Science and craft': 'Al-Jazari',
-  'Sufism and ethics': 'House of Wisdom',
-  'Sufism and tafsir': 'House of Wisdom',
-  'Tafsir and hadith': 'House of Wisdom',
-  'Tafsir and history': 'Ibn Khaldun',
-  'Tafsir and language': 'House of Wisdom',
-  'Tafsir and law': 'Ibn Khaldun',
-  'Tafsir and theology': 'House of Wisdom',
-  'Women in Islamic history': 'Fatima al-Fihri',
-  'American arts and media': 'American Muslims in the United States',
-  'American business and philanthropy': 'American Muslims in the United States',
-  'American civic leadership': 'American Muslims in the United States',
-  'American literature and thought': 'American Muslims in the United States',
-  'American scholarship and science': 'American Muslims in the United States',
-  'American service and armed forces': 'American Muslims in the United States',
-  'American sports and public life': 'American Muslims in the United States',
 }
 
 export const getPersonalityVideo = (person: Personality, story?: Pick<StoryRow, 'embedId'>) => {
-  if (story?.embedId && videoByEmbedId[story.embedId]) {
-    return {
-      ...videoByEmbedId[story.embedId],
-      note: 'Story-specific YouTube embed connected to this page.',
-    }
-  }
-
-  const directTopic = personalityVideoTopics[person.name]
-  const categoryTopic = categoryVideoTopics[person.category]
-  const fallbackTopic = person.popularity % 2 === 0 ? 'House of Wisdom' : 'Ibn Khaldun'
-  const video =
-    (directTopic && videoByTopic[directTopic]) ||
-    (categoryTopic && videoByTopic[categoryTopic]) ||
-    videoByTopic[fallbackTopic] ||
-    youtubeVideos[0]
-
-  return {
-    ...video,
-    note:
-      directTopic && video.topic === directTopic
-        ? 'Person-specific seed embed. Replace from the CMS if the editorial team approves a better source.'
-        : `Theme-level seed embed for ${person.category}. Replace with a dedicated ${person.name} video during editorial review.`,
-  }
+  return getApprovedPersonalityVideo(person, story)
 }
 
 export const getApprovedPersonalityVideo = (
   person: Personality,
   story?: Pick<StoryRow, 'embedId'>,
 ) => {
-  if (story?.embedId && videoByEmbedId[story.embedId]) {
+  if (story?.embedId && videoByEmbedId[story.embedId]?.topic === person.name) {
     return {
       ...videoByEmbedId[story.embedId],
-      note: 'Story-specific YouTube embed connected to this page.',
+      note: 'Person-specific story video connected to this page.',
     }
   }
 

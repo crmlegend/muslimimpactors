@@ -2492,6 +2492,22 @@ h1 {
   gap: 22px;
 }
 
+.profile-full-bio {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 34px;
+  padding-bottom: 30px;
+  border-bottom: 1px solid var(--line);
+}
+
+.profile-full-bio h2 {
+  margin-bottom: 2px;
+}
+
+.profile-full-bio p {
+  margin: 0;
+}
+
 .detail-section-list section {
   padding-bottom: 22px;
   border-bottom: 1px solid var(--line);
