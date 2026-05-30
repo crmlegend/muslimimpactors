@@ -49,8 +49,12 @@ const shouldPushPostgresSchema = process.env.PAYLOAD_POSTGRES_PUSH === 'true'
 const shouldUsePostgresSSL =
   process.env.DATABASE_SSL === 'true' || databaseURL.includes('supabase.com')
 const payloadSecret = process.env.PAYLOAD_SECRET
+const isNextProductionBuild = process.env.NEXT_PHASE === 'phase-production-build'
+const fallbackPayloadSecret = isNextProductionBuild
+  ? 'build-time-placeholder-payload-secret'
+  : 'local-development-payload-secret'
 
-if (process.env.NODE_ENV === 'production' && !payloadSecret) {
+if (process.env.NODE_ENV === 'production' && !payloadSecret && !isNextProductionBuild) {
   throw new Error('PAYLOAD_SECRET is required in production.')
 }
 
@@ -118,7 +122,7 @@ export default buildConfig({
   ],
   editor: lexicalEditor(),
   globals: [SiteSettings],
-  secret: payloadSecret || 'local-development-payload-secret',
+  secret: payloadSecret || fallbackPayloadSecret,
   serverURL: siteURL,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

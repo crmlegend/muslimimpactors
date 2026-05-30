@@ -105,6 +105,13 @@ Important production env vars:
 - `PAYLOAD_SQLITE_PUSH`: Local SQLite schema push flag.
 - `NODE_ENV`: `production` on Railway.
 
+Railway build-stage note:
+
+- Railway can run the Docker image build without runtime environment variables available to `next build`.
+- Next.js imports Payload config while collecting page data for routes such as `/api/visitor-event`.
+- `src/payload.config.ts` therefore allows a build-only placeholder secret when `NEXT_PHASE=phase-production-build`.
+- The running production server still requires a real `PAYLOAD_SECRET`; missing it outside the Next production build phase throws `PAYLOAD_SECRET is required in production.`
+
 ### Production Schema Rule
 
 During active CMS schema development:
@@ -852,6 +859,7 @@ Current deployment note:
 
 - Commit `7150539` contains the CMS People cutover, admin branding, `archiveTrack` migration, visitor-event helper, video placeholder behavior, updated tests, and this reference document.
 - Commit `06dd404` adds the hydration-warning suppression/documentation pass after the May 30, 2026 local admin screenshot.
+- The May 30, 2026 Railway failure `Failed to collect page data for /api/visitor-event` was caused by `PAYLOAD_SECRET` being unavailable during the Docker build stage. The app now permits a build-only placeholder secret during `NEXT_PHASE=phase-production-build` while still requiring the real secret at runtime.
 - If the live homepage has the reviewer layout but `/admin/login` still says `Login - Payload`, Railway is likely still serving an older build for the admin route or the deploy has not fully rolled forward. Check Railway build/deploy logs for the latest GitHub SHA before changing code.
 
 ## 18. QA Checklist
