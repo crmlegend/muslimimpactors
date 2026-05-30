@@ -851,6 +851,7 @@ https://muslimimpactors.americanmotivations.com/api/people?limit=1
 Current deployment note:
 
 - Commit `7150539` contains the CMS People cutover, admin branding, `archiveTrack` migration, visitor-event helper, video placeholder behavior, updated tests, and this reference document.
+- Commit `06dd404` adds the hydration-warning suppression/documentation pass after the May 30, 2026 local admin screenshot.
 - If the live homepage has the reviewer layout but `/admin/login` still says `Login - Payload`, Railway is likely still serving an older build for the admin route or the deploy has not fully rolled forward. Check Railway build/deploy logs for the latest GitHub SHA before changing code.
 
 ## 18. QA Checklist
