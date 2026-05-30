@@ -91,6 +91,7 @@ export default buildConfig({
     meta: {
       titleSuffix: '- Muslim Impactors',
     },
+    suppressHydrationWarning: true,
   },
   cors: allowedOrigins,
   csrf: allowedOrigins,

@@ -84,6 +84,13 @@ npm run dev
 
 The current `dev` script sets `PAYLOAD_SQLITE_PUSH=true` so Payload can update the local SQLite schema while the data model is still changing.
 
+Local SQLite drift note:
+
+- The committed production migration for `archiveTrack` targets Postgres.
+- Local development uses the ignored `payload.db` SQLite file, so an older local database can drift from the current Payload schema.
+- If local admin routes fail with `SQLITE_ERROR: no such column: archive_track`, add the local SQLite column and backfill it, or reseed a fresh local database if no local data needs to be preserved.
+- This local SQLite recovery is not a production deployment step.
+
 ### Production
 
 Production uses Supabase Postgres through `DATABASE_URL`.
@@ -671,13 +678,19 @@ Core relationships:
 
 Current differentiation uses the dedicated `archiveTrack` field on People:
 
-  - `american_civic_impact`
-  - `golden_age_history`
-  - `global_modern_impact`
-  - `contributor`
-  - `other`
+- `american_civic_impact`: modern/current United States-facing civic, public-service, cultural, professional, business, or humanitarian profiles.
+- `golden_age_history`: historical Muslim intellectual, scientific, scholarly, institutional, or cultural figures used for the left homepage rail and the Muslims in History section.
+- `global_modern_impact`: modern profiles that are globally relevant but not primarily United States civic profiles.
+- `contributor`: expert contributors, editors, institutional contacts, or people who support the archive rather than serving as primary public profiles.
+- `other`: temporary classification for records that need editorial sorting.
 
-`archiveTrack` is used in admin columns, seed data, and public people filtering. Homepage rails should continue moving toward this field as the CMS-to-frontend cutover expands.
+`archiveTrack` is used in admin columns, seed data, CMS-to-public People mapping, and public people filtering. The current `/personalities` route hides Golden Age and contributor records so the public directory stays focused on modern civic/professional personalities. The Muslims in History section and homepage left rail are the correct public surfaces for Golden Age records.
+
+Production migration:
+
+- `src/migrations/20260530_082500_add_people_archive_track.ts` creates the Postgres enum, adds `people.archive_track`, and backfills existing records.
+- `src/migrations/index.ts` registers the migration for Payload `prodMigrations`.
+- Keep `PAYLOAD_POSTGRES_PUSH=false` so production schema changes move through committed migrations rather than automatic push.
 
 ## 12. Sponsor Workflow
 
@@ -750,7 +763,22 @@ Implemented setup:
 - Custom Payload admin logo and icon components are configured.
 - Admin metadata/title suffix is set to Muslim Impactors.
 - Payload import map includes the custom admin brand components.
+- `admin.suppressHydrationWarning` is enabled because browser extensions can inject attributes into the admin shell before React hydrates.
 - Verify `/admin/login` and `/admin` locally and live after each deploy that touches admin components.
+
+Screenshot/hydration note:
+
+- The May 30, 2026 local screenshot showed a Next.js hydration warning on `/admin/globals/site-settings`.
+- The mismatch was `cz-shortcut-listen="true"` on `<body>`, which is typically injected by a browser extension before React hydrates.
+- This is not a Payload data-loss or database issue.
+- The defensive config is `admin.suppressHydrationWarning: true` in `src/payload.config.ts`.
+- The public frontend layout also sets `suppressHydrationWarning` on `<html>` and `<body>` for the same extension-injection case.
+- If the warning persists in one browser, retest in a clean profile/incognito window with extensions disabled before changing application code.
+
+Local verification result:
+
+- After current code and local SQLite backfill, `/admin/login` renders the custom `Muslim Impactors` admin logo and document title `Login - Muslim Impactors`.
+- The live admin route must be checked after Railway finishes serving the latest pushed commit, because the old build can continue serving temporarily during deployment.
 
 ## 16. Audit And Visitor Tracking
 
@@ -771,20 +799,29 @@ Visitor events:
 Standard workflow:
 
 1. Make local code changes.
-2. Run type generation if Payload schema changed:
+2. If the change is a rollback-sensitive milestone, create a git tag before editing:
+
+```bash
+git tag -a backup/reviewer-demo-cleanup-20260530 -m "Backup before reviewer cleanup"
+git push origin backup/reviewer-demo-cleanup-20260530
+```
+
+The current rollback reference is `backup/reviewer-demo-cleanup-20260530`, pointing to commit `383a7bc`.
+
+3. Run type generation if Payload schema changed:
 
 ```bash
 npm run generate:types
 npm run generate:importmap
 ```
 
-3. Build:
+4. Build:
 
 ```bash
 npm run build
 ```
 
-4. Commit and push to GitHub:
+5. Commit and push to GitHub:
 
 ```bash
 git add .
@@ -792,8 +829,8 @@ git commit -m "Meaningful message"
 git push origin main
 ```
 
-5. Railway auto-deploys from GitHub.
-6. Verify:
+6. Railway auto-deploys from GitHub.
+7. Verify:
 
 ```text
 https://muslimimpactors.americanmotivations.com/health
@@ -802,7 +839,19 @@ https://muslimimpactors.americanmotivations.com/admin/login
 https://muslimimpactors.americanmotivations.com/api/people?limit=1
 ```
 
-7. Keep `PAYLOAD_POSTGRES_PUSH=false`; schema changes should deploy through committed migrations.
+8. Confirm the live build is actually new, not only responding:
+
+- Homepage should include `.review-home-grid`.
+- Admin login title should be `Login - Muslim Impactors`.
+- Admin login brand should render the custom Muslim Impactors logo, not the default Payload logo.
+- `/api/people?limit=1` should return records.
+
+9. Keep `PAYLOAD_POSTGRES_PUSH=false`; schema changes should deploy through committed migrations.
+
+Current deployment note:
+
+- Commit `7150539` contains the CMS People cutover, admin branding, `archiveTrack` migration, visitor-event helper, video placeholder behavior, updated tests, and this reference document.
+- If the live homepage has the reviewer layout but `/admin/login` still says `Login - Payload`, Railway is likely still serving an older build for the admin route or the deploy has not fully rolled forward. Check Railway build/deploy logs for the latest GitHub SHA before changing code.
 
 ## 18. QA Checklist
 
@@ -831,6 +880,7 @@ Admin:
 - `Articles` shows records.
 - `Sponsors` shows records and sponsor details.
 - `Homepage & Branding` loads and saves.
+- `Homepage & Branding` should load without a persistent hydration overlay. A one-off body attribute mismatch mentioning `cz-shortcut-listen` points to browser extension injection; verify in a clean browser profile.
 - `Audit Logs` visible to admin roles.
 - `Visitor Events` visible to admin roles.
 - General/subscriber users cannot browse other users.
