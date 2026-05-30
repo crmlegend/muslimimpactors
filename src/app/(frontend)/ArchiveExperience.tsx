@@ -31,12 +31,16 @@ type ArchiveExperienceSettings = {
     leftRailButtonLabel?: string
     leftRailEyebrow?: string
     leftRailHeading?: string
+    rightRailBody?: string
     rightRailEyebrow?: string
     rightRailHeading?: string
+    showLeftRailBody?: boolean
+    showRightRailBody?: boolean
   }
   editorChoiceSlugs?: string[]
   featuredPersonalitySource?: 'daily' | 'manual'
   featuredPersonalitySlug?: string
+  goldenAgeHighlightSlugs?: string[]
   recommendedStorySlugs?: string[]
   sponsorLabels?: Record<string, string>
   sponsorSlugs?: string[]
@@ -101,16 +105,31 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
       ? configuredFeaturedPersonality
       : featuredPersonality
   const portraitPeople = useMemo(
-    () =>
-      uniqueBySlug([
+    () => {
+      const surroundingPeople = popularPersonalities.filter(
+        (person) => person.slug !== activeFeaturedPersonality.slug,
+      )
+      const centerIndex = Math.min(10, Math.max(5, Math.floor(surroundingPeople.length / 2)))
+
+      return uniqueBySlug([
+        ...surroundingPeople.slice(0, centerIndex),
         activeFeaturedPersonality,
-        ...popularPersonalities.filter((person) => person.slug !== activeFeaturedPersonality.slug),
-      ]).slice(0, 24),
+        ...surroundingPeople.slice(centerIndex),
+      ]).slice(0, 24)
+    },
     [activeFeaturedPersonality],
   )
   const goldenAgePeople = useMemo(
-    () =>
-      historicalPersonalities
+    () => {
+      const configuredPeople = settings?.goldenAgeHighlightSlugs
+        ?.map((slug) => historicalPersonalities.find((person) => person.slug === slug))
+        .filter(isDefined)
+
+      if (configuredPeople?.length) {
+        return configuredPeople.slice(0, 8)
+      }
+
+      return historicalPersonalities
         .filter((person) =>
           [
             'Ibn Khaldun',
@@ -123,21 +142,34 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
             'Mimar Sinan',
           ].includes(person.name),
         )
-        .slice(0, 8),
-    [],
+        .slice(0, 8)
+    },
+    [settings?.goldenAgeHighlightSlugs],
   )
-  const editorChoicePeople =
+  const imagePeople = useMemo(
+    () => uniqueBySlug([...portraitPeople, ...goldenAgePeople]),
+    [portraitPeople, goldenAgePeople],
+  )
+  const configuredEditorChoicePeople =
     settings?.editorChoiceSlugs
       ?.map((slug) => popularPersonalities.find((person) => person.slug === slug))
-      .filter(isDefined) || editorsPicks
-  const recommendedStories =
+      .filter(isDefined) || []
+  const editorChoicePeople = configuredEditorChoicePeople.length
+    ? configuredEditorChoicePeople
+    : editorsPicks
+  const editorChoicePerson = editorChoicePeople[0] || editorsPicks[0] || activeFeaturedPersonality
+  const configuredRecommendedStories =
     settings?.recommendedStorySlugs
       ?.map((slug) => storyRows.find((story) => story.slug === slug))
-      .filter(isDefined) || storyRows.slice(0, 6)
-  const sponsorAds =
+      .filter(isDefined) || []
+  const recommendedStories = configuredRecommendedStories.length
+    ? configuredRecommendedStories
+    : storyRows.slice(0, 6)
+  const configuredSponsorAds =
     settings?.sponsorSlugs
       ?.map((slug) => sponsorRows.find((sponsor) => sponsor.slug === slug))
-      .filter(isDefined) || sponsorRows
+      .filter(isDefined) || []
+  const sponsorAds = configuredSponsorAds.length ? configuredSponsorAds : sponsorRows
   const brandStyle = {
     '--brand-light': settings?.brandColors?.lightAccentColor || '#E1DFDE',
     '--brand-neutral': settings?.brandColors?.neutralColor || '#FFFFFF',
@@ -151,10 +183,14 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
       'A focused rail for scholars, institution builders, physicians, jurists, scientists, and artists who shaped the intellectual foundations behind the archive.',
     leftRailButtonLabel: settings?.homepageCopy?.leftRailButtonLabel || 'Open Golden Age Index',
     leftRailEyebrow: settings?.homepageCopy?.leftRailEyebrow || 'From The Golden Age',
-    leftRailHeading: settings?.homepageCopy?.leftRailHeading || 'Muslims in History',
+    leftRailHeading: settings?.homepageCopy?.leftRailHeading || 'From The Golden Age',
+    rightRailBody: settings?.homepageCopy?.rightRailBody,
     rightRailEyebrow: settings?.homepageCopy?.rightRailEyebrow || 'Our Sponsors',
-    rightRailHeading: settings?.homepageCopy?.rightRailHeading || 'Project Sponsors',
+    rightRailHeading: settings?.homepageCopy?.rightRailHeading || 'Our Sponsors',
+    showLeftRailBody: settings?.homepageCopy?.showLeftRailBody === true,
+    showRightRailBody: settings?.homepageCopy?.showRightRailBody === true,
   }
+  const editorChoiceImage = portraitImages[editorChoicePerson.slug] || editorChoicePerson.imageUrl
   const selectedPerson = selectedPersonSlug
     ? popularPersonalities.find((person) => person.slug === selectedPersonSlug)
     : null
@@ -200,7 +236,7 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
 
   useEffect(() => {
     const controller = new AbortController()
-    const people = portraitPeople.filter((person) => canFetchWikipediaSummary(person.wikipediaTitle))
+    const people = imagePeople.filter((person) => canFetchWikipediaSummary(person.wikipediaTitle))
 
     const loadImages = async () => {
       const entries = await Promise.all(
@@ -233,7 +269,7 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
     void loadImages()
 
     return () => controller.abort()
-  }, [portraitPeople])
+  }, [imagePeople])
 
   useEffect(() => {
     logVisitorEvent({ eventType: 'page_view' })
@@ -246,14 +282,31 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
       <main>
         <section className="review-home-grid" id="portrait-index">
           <aside className="golden-age-rail">
-            <span>{homepageCopy.leftRailEyebrow}</span>
             <h2>{homepageCopy.leftRailHeading}</h2>
-            <p>{homepageCopy.leftRailBody}</p>
-            <div>
+            {homepageCopy.showLeftRailBody ? <p>{homepageCopy.leftRailBody}</p> : null}
+            <div className="golden-age-thumb-grid">
               {goldenAgePeople.map((person) => (
-                <Link href={person.href} key={person.slug}>
-                  <strong>{person.name}</strong>
-                  <small>{person.category}</small>
+                <Link className="golden-age-card" href={person.href} key={person.slug}>
+                  <span
+                    className={`golden-age-thumb ${
+                      portraitImages[person.slug] || person.imageUrl ? 'has-photo' : ''
+                    }`}
+                    style={
+                      {
+                        '--portrait-image':
+                          portraitImages[person.slug] || person.imageUrl
+                            ? `url("${portraitImages[person.slug] || person.imageUrl}")`
+                            : undefined,
+                        '--portrait-tone': person.tone,
+                      } as React.CSSProperties
+                    }
+                  >
+                    {portraitImages[person.slug] || person.imageUrl ? null : person.initials}
+                  </span>
+                  <span>
+                    <strong>{person.name}</strong>
+                    <small>{person.category}</small>
+                  </span>
                 </Link>
               ))}
             </div>
@@ -323,8 +376,10 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
           </section>
 
           <aside className="sponsor-ad-rail" aria-label="Sponsor placements">
-            <span>{homepageCopy.rightRailEyebrow}</span>
             <h2>{homepageCopy.rightRailHeading}</h2>
+            {homepageCopy.showRightRailBody && homepageCopy.rightRailBody ? (
+              <p>{homepageCopy.rightRailBody}</p>
+            ) : null}
             <div>
               {sponsorAds.map((sponsor) => (
                 <Link
@@ -355,17 +410,30 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
           <div className="editor-pick-main">
             <div className="panel-heading">
               <span>Editor&apos;s Choice</span>
-              <h2>Profiles selected for first review</h2>
+              <h2>Featured profile selected by editors</h2>
             </div>
-            <div className="compact-person-grid">
-              {editorChoicePeople.map((person) => (
-                <Link href={person.href} key={person.slug}>
-                  <span>{person.category}</span>
-                  <h3>{person.name}</h3>
-                  <p>{person.summary}</p>
-                </Link>
-              ))}
-            </div>
+            <Link className="editor-choice-feature" href={editorChoicePerson.href}>
+              <span
+                className={`editor-choice-image ${editorChoiceImage ? 'has-photo' : ''}`}
+                style={
+                  {
+                    '--portrait-image': editorChoiceImage
+                      ? `url("${editorChoiceImage}")`
+                      : undefined,
+                    '--portrait-tone': editorChoicePerson.tone,
+                  } as React.CSSProperties
+                }
+              >
+                {editorChoiceImage ? null : editorChoicePerson.initials}
+              </span>
+              <span className="editor-choice-copy">
+                <small>{editorChoicePerson.category}</small>
+                <strong>{editorChoicePerson.name}</strong>
+                <em>{editorChoicePerson.role}</em>
+                <p>{editorChoicePerson.todayRelevance || editorChoicePerson.summary}</p>
+                <b>Open dossier</b>
+              </span>
+            </Link>
 
             <div className="recommended-video-strip" aria-label="Recommended video references">
               <div className="panel-heading">

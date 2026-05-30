@@ -923,14 +923,15 @@ h1 {
 .golden-age-rail h2,
 .sponsor-ad-rail h2 {
   margin: 0;
-  color: var(--green);
+  color: var(--brand-secondary);
   font-family: var(--serif);
-  font-size: clamp(30px, 2.3vw, 42px);
+  font-size: clamp(30px, 2.3vw, 40px);
   line-height: 1.08;
   overflow-wrap: anywhere;
 }
 
-.golden-age-rail p {
+.golden-age-rail p,
+.sponsor-ad-rail > p {
   margin: 0;
   color: var(--muted);
   font-size: 14px;
@@ -945,7 +946,51 @@ h1 {
   border-top: 1px solid var(--line);
 }
 
-.golden-age-rail > div a {
+.golden-age-rail .golden-age-thumb-grid {
+  gap: 8px;
+  border-top: 0;
+}
+
+.golden-age-card {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 78px;
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+  border-left: 4px solid var(--brand-secondary);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+}
+
+.golden-age-thumb {
+  display: grid;
+  width: 64px;
+  aspect-ratio: 1;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.86);
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.24), transparent 30%),
+    linear-gradient(145deg, var(--portrait-tone), #0a2d48 86%);
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.golden-age-thumb.has-photo {
+  background:
+    linear-gradient(180deg, rgba(17, 26, 23, 0.04), rgba(17, 26, 23, 0.18)),
+    var(--portrait-image) center / cover no-repeat;
+}
+
+.golden-age-card > span:last-child {
+  display: grid;
+  gap: 4px;
+}
+
+.golden-age-rail > div a:not(.golden-age-card) {
   display: grid;
   gap: 4px;
   padding: 13px 0;
@@ -1058,6 +1103,87 @@ h1 {
   gap: 12px;
   padding-top: 28px;
   border-top: 1px solid var(--line);
+}
+
+.editor-choice-feature {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.38fr) minmax(0, 1fr);
+  min-height: 340px;
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--brand-secondary);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.88);
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.editor-choice-image {
+  display: grid;
+  min-height: 340px;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.84);
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.24), transparent 28%),
+    linear-gradient(145deg, var(--portrait-tone), #0a2d48 86%);
+  font-family: var(--serif);
+  font-size: clamp(48px, 6vw, 92px);
+  font-weight: 900;
+}
+
+.editor-choice-image.has-photo {
+  background:
+    linear-gradient(180deg, rgba(17, 26, 23, 0.08), rgba(17, 26, 23, 0.22)),
+    var(--portrait-image) center / cover no-repeat;
+}
+
+.editor-choice-copy {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  padding: clamp(22px, 3vw, 42px);
+}
+
+.editor-choice-copy small {
+  color: var(--brand-tertiary);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.editor-choice-copy strong {
+  color: var(--green);
+  font-family: var(--serif);
+  font-size: clamp(36px, 4vw, 62px);
+  line-height: 1;
+}
+
+.editor-choice-copy em {
+  color: var(--ink);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.editor-choice-copy p {
+  max-width: 700px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.editor-choice-copy b {
+  justify-self: start;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 8px;
+  padding: 0 14px;
+  color: #fff;
+  background: var(--green);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .popular-personality-rail {
@@ -1208,8 +1334,10 @@ h1 {
 }
 
 .portrait-tile.is-featured {
-  grid-column: span 2;
-  grid-row: span 2;
+  z-index: 3;
+  outline: 3px solid var(--brand-secondary);
+  outline-offset: -3px;
+  box-shadow: 0 14px 32px rgba(13, 118, 188, 0.2);
 }
 
 .portrait-tile.has-photo {
@@ -2879,8 +3007,16 @@ h1 {
 }
 
 .webstories-home-stage .portrait-tile.is-featured {
-  grid-column: span 3;
-  grid-row: span 3;
+  grid-column: auto;
+  grid-row: auto;
+  transform: scale(1.12);
+  transform-origin: center;
+  z-index: 4;
+}
+
+.webstories-home-stage .portrait-tile.is-featured:hover,
+.webstories-home-stage .portrait-tile.is-featured:focus-visible {
+  transform: scale(1.16);
 }
 
 .webstories-home-stage .portrait-tile.is-featured .portrait-overlay {
@@ -2891,11 +3027,15 @@ h1 {
 }
 
 .webstories-home-stage .portrait-tile.is-featured .portrait-overlay strong {
-  font-size: clamp(24px, 2.3vw, 38px);
+  font-size: clamp(15px, 1.1vw, 18px);
 }
 
 .webstories-home-stage .portrait-tile.is-featured .portrait-overlay small {
-  font-size: clamp(12px, 0.95vw, 15px);
+  font-size: 11px;
+}
+
+.webstories-home-stage .portrait-tile.is-featured .portrait-overlay em {
+  display: none;
 }
 
 .webstories-home-stage .portrait-hover-card {
@@ -3358,12 +3498,20 @@ h1 {
     padding: 18px 18px 20px;
   }
 
+  .archive-header.menu-open {
+    align-items: stretch;
+  }
+
   .header-top-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: flex-start;
+    width: 100%;
+    min-width: 0;
   }
 
   .brand-stack {
-    max-width: calc(100% - 92px);
+    max-width: 100%;
   }
 
   .wordmark {
@@ -3417,15 +3565,19 @@ h1 {
   .search-area {
     width: 100%;
     max-width: 100%;
+    min-width: 0;
   }
 
   .search-box {
     width: 100%;
     min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .search-box input {
     min-width: 0;
+    text-overflow: ellipsis;
   }
 
   .mega-search {
@@ -3668,20 +3820,30 @@ h1 {
   }
 
   .webstories-home-stage .portrait-tile.is-featured {
-    grid-column: 1 / -1;
+    grid-column: auto;
     grid-row: auto;
-    min-height: 214px;
-    aspect-ratio: 16 / 10;
+    min-height: 96px;
+    aspect-ratio: 1;
+    transform: scale(1.08);
+  }
+
+  .webstories-home-stage .portrait-tile.is-featured:hover,
+  .webstories-home-stage .portrait-tile.is-featured:focus-visible {
+    transform: scale(1.1);
   }
 
   .webstories-home-stage .portrait-tile.is-featured .portrait-overlay strong {
-    font-size: clamp(28px, 10vw, 38px);
+    font-size: 14px;
   }
 
   .webstories-home-stage .portrait-tile.is-featured .portrait-overlay small,
   .webstories-home-stage .portrait-tile.is-featured .portrait-overlay em {
-    font-size: 13px;
+    font-size: 11px;
     line-height: 1.25;
+  }
+
+  .webstories-home-stage .portrait-tile.is-featured .portrait-overlay em {
+    display: none;
   }
 
   .review-home-grid {
@@ -3707,6 +3869,22 @@ h1 {
     padding: 34px 14px;
   }
 
+  .editor-choice-feature {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-choice-image {
+    min-height: 240px;
+  }
+
+  .golden-age-card {
+    grid-template-columns: 56px minmax(0, 1fr);
+  }
+
+  .golden-age-thumb {
+    width: 56px;
+  }
+
   .popular-personality-rail .ranked-list {
     grid-template-columns: 1fr;
     border-left: 0;
@@ -3729,7 +3907,7 @@ h1 {
     grid-column: auto;
   }
 
-  .portrait-tile.is-featured:not(.webstories-home-stage .portrait-tile.is-featured) {
+  .portrait-tile.is-featured {
     grid-column: span 1;
     grid-row: span 1;
   }

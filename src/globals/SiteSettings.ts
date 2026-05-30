@@ -45,10 +45,20 @@ export const SiteSettings: GlobalConfig = {
         {
           name: 'leftRailHeading',
           type: 'text',
-          defaultValue: 'Muslims in History',
+          defaultValue: 'From The Golden Age',
           label: 'Left rail heading',
           admin: {
-            description: 'Main heading for the left column.',
+            description: 'Visible headline for the left Golden Age column.',
+          },
+        },
+        {
+          name: 'showLeftRailBody',
+          type: 'checkbox',
+          defaultValue: false,
+          label: 'Show left rail supporting text',
+          admin: {
+            description:
+              'Keep disabled for the clean Web-of-Stories-style homepage. Enable only when extra explanatory text is needed.',
           },
         },
         {
@@ -76,8 +86,23 @@ export const SiteSettings: GlobalConfig = {
         {
           name: 'rightRailHeading',
           type: 'text',
-          defaultValue: 'Project Sponsors',
+          defaultValue: 'Our Sponsors',
           label: 'Right rail heading',
+        },
+        {
+          name: 'showRightRailBody',
+          type: 'checkbox',
+          defaultValue: false,
+          label: 'Show sponsor rail supporting text',
+          admin: {
+            description:
+              'Keep disabled for the clean sponsor-ad rail. Enable only when sponsor context copy is needed.',
+          },
+        },
+        {
+          name: 'rightRailBody',
+          type: 'textarea',
+          label: 'Sponsor rail body',
         },
       ],
     },
@@ -129,7 +154,18 @@ export const SiteSettings: GlobalConfig = {
           hasMany: true,
           relationTo: 'people',
           admin: {
-            description: 'Profiles displayed in the Editor’s Choice section.',
+            description:
+              'First selected profile is displayed as the main Editor’s Pick. Additional selections are retained for future layouts.',
+          },
+        },
+        {
+          name: 'goldenAgeHighlights',
+          type: 'relationship',
+          hasMany: true,
+          relationTo: 'people',
+          admin: {
+            description:
+              'Optional Golden Age profiles shown as thumbnails in the left rail. Leave empty to use the seeded historical defaults.',
           },
         },
         {
@@ -171,6 +207,38 @@ export const SiteSettings: GlobalConfig = {
               defaultValue: true,
             },
           ],
+        },
+      ],
+    },
+    {
+      name: 'aiDesignAssistant',
+      type: 'group',
+      admin: {
+        description:
+          'Safe request area for admins to describe UI/UX changes. Requests are stored for review and do not automatically alter code or backend behavior.',
+      },
+      fields: [
+        {
+          name: 'enabled',
+          type: 'checkbox',
+          defaultValue: false,
+          label: 'Enable AI-assisted design review notes',
+        },
+        {
+          name: 'latestRequest',
+          type: 'textarea',
+          label: 'Latest UI/UX change request',
+          admin: {
+            description:
+              'Describe the desired change in plain language. An editor/developer can review this and convert it into a controlled implementation task.',
+          },
+        },
+        {
+          name: 'guardrails',
+          type: 'textarea',
+          defaultValue:
+            'Do not change collection schemas, permissions, deployment secrets, payment settings, or published content automatically. Treat AI suggestions as drafts requiring admin/developer review.',
+          label: 'AI guardrails',
         },
       ],
     },

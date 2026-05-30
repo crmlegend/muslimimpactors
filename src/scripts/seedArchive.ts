@@ -957,9 +957,11 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
           'A focused rail for scholars, institution builders, physicians, jurists, scientists, and artists who shaped the intellectual foundations behind the archive.',
         leftRailButtonLabel: 'Open Golden Age Index',
         leftRailEyebrow: 'From The Golden Age',
-        leftRailHeading: 'Muslims in History',
+        leftRailHeading: 'From The Golden Age',
         rightRailEyebrow: 'Our Sponsors',
-        rightRailHeading: 'Project Sponsors',
+        rightRailHeading: 'Our Sponsors',
+        showLeftRailBody: false,
+        showRightRailBody: false,
       },
       homepage: {
         dailyFeaturedPersonality: personIds.get('keith-ellison') || personIdList[0],
@@ -974,6 +976,14 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
           personIds.get('shahid-khan'),
           personIds.get('aziz-sancar'),
           personIds.get('zia-mian'),
+        ].filter(Boolean),
+        goldenAgeHighlights: [
+          personIds.get('ibn-khaldun'),
+          personIds.get('al-biruni'),
+          personIds.get('fatima-al-fihri'),
+          personIds.get('ibn-sina'),
+          personIds.get('al-jazari'),
+          personIds.get('mimar-sinan'),
         ].filter(Boolean),
         recommendedStories: [
           storyIds.get('service-sacrifice-and-american-muslim-memory'),

@@ -2933,9 +2933,13 @@ export interface SiteSetting {
      */
     leftRailEyebrow?: string | null;
     /**
-     * Main heading for the left column.
+     * Visible headline for the left Golden Age column.
      */
     leftRailHeading?: string | null;
+    /**
+     * Keep disabled for the clean Web-of-Stories-style homepage. Enable only when extra explanatory text is needed.
+     */
+    showLeftRailBody?: boolean | null;
     leftRailBody?: string | null;
     leftRailButtonLabel?: string | null;
     /**
@@ -2943,6 +2947,11 @@ export interface SiteSetting {
      */
     rightRailEyebrow?: string | null;
     rightRailHeading?: string | null;
+    /**
+     * Keep disabled for the clean sponsor-ad rail. Enable only when sponsor context copy is needed.
+     */
+    showRightRailBody?: boolean | null;
+    rightRailBody?: string | null;
   };
   /**
    * Controls the daily/manual featured personality, editor selections, recommended videos, and sponsor ad ordering.
@@ -2965,9 +2974,13 @@ export interface SiteSetting {
      */
     manualFeaturedEndsAt?: string | null;
     /**
-     * Profiles displayed in the Editor’s Choice section.
+     * First selected profile is displayed as the main Editor’s Pick. Additional selections are retained for future layouts.
      */
     editorsChoice?: (number | Person)[] | null;
+    /**
+     * Optional Golden Age profiles shown as thumbnails in the left rail. Leave empty to use the seeded historical defaults.
+     */
+    goldenAgeHighlights?: (number | Person)[] | null;
     /**
      * Story/video records displayed in the Recommended Videos section.
      */
@@ -2984,6 +2997,17 @@ export interface SiteSetting {
           id?: string | null;
         }[]
       | null;
+  };
+  /**
+   * Safe request area for admins to describe UI/UX changes. Requests are stored for review and do not automatically alter code or backend behavior.
+   */
+  aiDesignAssistant?: {
+    enabled?: boolean | null;
+    /**
+     * Describe the desired change in plain language. An editor/developer can review this and convert it into a controlled implementation task.
+     */
+    latestRequest?: string | null;
+    guardrails?: string | null;
   };
   /**
    * Reviewer-approved default colors. Super admins/admins can update these values without code changes.
@@ -3023,10 +3047,13 @@ export interface SiteSettingsSelect<T extends boolean = true> {
     | {
         leftRailEyebrow?: T;
         leftRailHeading?: T;
+        showLeftRailBody?: T;
         leftRailBody?: T;
         leftRailButtonLabel?: T;
         rightRailEyebrow?: T;
         rightRailHeading?: T;
+        showRightRailBody?: T;
+        rightRailBody?: T;
       };
   homepage?:
     | T
@@ -3036,6 +3063,7 @@ export interface SiteSettingsSelect<T extends boolean = true> {
         manualFeaturedStartsAt?: T;
         manualFeaturedEndsAt?: T;
         editorsChoice?: T;
+        goldenAgeHighlights?: T;
         recommendedStories?: T;
         sponsorAdSlots?:
           | T
@@ -3046,6 +3074,13 @@ export interface SiteSettingsSelect<T extends boolean = true> {
               active?: T;
               id?: T;
             };
+      };
+  aiDesignAssistant?:
+    | T
+    | {
+        enabled?: T;
+        latestRequest?: T;
+        guardrails?: T;
       };
   branding?:
     | T

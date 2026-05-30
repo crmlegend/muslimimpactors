@@ -22,12 +22,16 @@ type RawSiteSettings = {
     leftRailButtonLabel?: unknown
     leftRailEyebrow?: unknown
     leftRailHeading?: unknown
+    rightRailBody?: unknown
     rightRailEyebrow?: unknown
     rightRailHeading?: unknown
+    showLeftRailBody?: unknown
+    showRightRailBody?: unknown
   }
   homepage?: {
     dailyFeaturedPersonality?: RelationshipValue
     editorsChoice?: RelationshipValue[]
+    goldenAgeHighlights?: RelationshipValue[]
     manualFeaturedEndsAt?: unknown
     manualFeaturedPersonality?: RelationshipValue
     manualFeaturedStartsAt?: unknown
@@ -42,6 +46,7 @@ type RawSiteSettings = {
 }
 
 const asText = (value: unknown) => (typeof value === 'string' ? value : undefined)
+const asBoolean = (value: unknown) => value === true
 
 const isDefined = <T,>(value: T | null | undefined): value is T => Boolean(value)
 
@@ -101,12 +106,16 @@ const getHomepageSettings = async () => {
         leftRailButtonLabel: asText(settings.homepageCopy?.leftRailButtonLabel),
         leftRailEyebrow: asText(settings.homepageCopy?.leftRailEyebrow),
         leftRailHeading: asText(settings.homepageCopy?.leftRailHeading),
+        rightRailBody: asText(settings.homepageCopy?.rightRailBody),
         rightRailEyebrow: asText(settings.homepageCopy?.rightRailEyebrow),
         rightRailHeading: asText(settings.homepageCopy?.rightRailHeading),
+        showLeftRailBody: asBoolean(settings.homepageCopy?.showLeftRailBody),
+        showRightRailBody: asBoolean(settings.homepageCopy?.showRightRailBody),
       },
       editorChoiceSlugs: homepage.editorsChoice?.map(relationshipSlug).filter(isDefined),
       featuredPersonalitySource,
       featuredPersonalitySlug: manualFeaturedIsActive ? manualFeaturedSlug : dailyFeaturedSlug,
+      goldenAgeHighlightSlugs: homepage.goldenAgeHighlights?.map(relationshipSlug).filter(isDefined),
       recommendedStorySlugs: homepage.recommendedStories?.map(relationshipSlug).filter(isDefined),
       sponsorLabels: Object.fromEntries(
         sponsorSlots
