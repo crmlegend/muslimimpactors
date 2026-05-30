@@ -93,6 +93,10 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
     meta: {
+      icons: {
+        icon: [{ type: 'image/svg+xml', url: '/favicon.ico?v=20260530' }],
+        shortcut: ['/favicon.ico?v=20260530'],
+      },
       titleSuffix: '- Muslim Impactors',
     },
     suppressHydrationWarning: true,

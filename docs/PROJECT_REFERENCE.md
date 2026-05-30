@@ -61,6 +61,7 @@ Important paths:
 - `src/app/(payload)/`: Payload API and admin routes.
 - `src/scripts/seedArchive.ts`: Demo/archive seed script.
 - `src/migrations/`: Postgres migrations used by production startup through Payload `prodMigrations`.
+- `src/app/favicon.ico/route.ts`: Shared Muslim Impactors favicon route for public and admin surfaces.
 - Temporary public seed/diagnostic routes were removed after production stabilization:
   - `/archive-bootstrap`
   - `/admin-diagnostics`
@@ -860,6 +861,7 @@ Current deployment note:
 - Commit `7150539` contains the CMS People cutover, admin branding, `archiveTrack` migration, visitor-event helper, video placeholder behavior, updated tests, and this reference document.
 - Commit `06dd404` adds the hydration-warning suppression/documentation pass after the May 30, 2026 local admin screenshot.
 - The May 30, 2026 Railway failure `Failed to collect page data for /api/visitor-event` was caused by `PAYLOAD_SECRET` being unavailable during the Docker build stage. The app now permits a build-only placeholder secret during `NEXT_PHASE=phase-production-build` while still requiring the real secret at runtime.
+- The May 30, 2026 live admin screenshot showing `Nothing found` at `/admin/globals/site-settings` was caused by production Postgres missing the `site_settings` global tables. Migration `20260530_142700_create_site_settings_global` creates the global table, sponsor-slot array table, relationship table, default settings row, constraints, and indexes.
 - If the live homepage has the reviewer layout but `/admin/login` still says `Login - Payload`, Railway is likely still serving an older build for the admin route or the deploy has not fully rolled forward. Check Railway build/deploy logs for the latest GitHub SHA before changing code.
 
 ## 18. QA Checklist
