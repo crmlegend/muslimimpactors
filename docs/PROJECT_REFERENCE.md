@@ -137,7 +137,7 @@ The homepage is reviewer-focused. Current target design:
 - First section with three columns:
   - Left rail: "From The Golden Age" historical/intellectual profile rail.
   - Center: portrait wall modeled after Web of Stories behavior. A featured personality should appear inside the portrait grid with a slightly larger image tile. Hover shows a preview. Click opens a video/story popup.
-  - Right rail: "Our Sponsors" sponsor ad stack.
+  - Right rail: "Our Sponsors" sponsor ad stack. This now reads published Payload sponsor records first, with static seed sponsors as a fallback.
 - Second section:
   - Main column: Editor's Pick personality/story feature.
   - Side column: Popular personalities.
@@ -156,8 +156,8 @@ Articles and stories remain available as pages, but they should not dominate the
 - `/themes`: Topic/theme index.
 - `/timelines`: Timeline/event index.
 - `/sources`: Public source/citation index.
-- `/sponsors`: Sponsor listing.
-- `/sponsors/[slug]`: Sponsor detail page with gratitude copy, impact highlights, sponsor commendation, and source-backed trust notes.
+- `/sponsors`: Sponsor listing. This now reads published Payload sponsor records first, with static seed data as a fallback.
+- `/sponsors/[slug]`: Sponsor detail page with gratitude copy, impact highlights, sponsor commendation, source-backed trust notes, and CMS-linked supported people/stories when relationships are present.
 - `/contributors`: Contributor profile or contributor information page.
 - `/workflow`: Submission/review process page.
 - `/ask`: AI Ask demo page.
@@ -300,6 +300,11 @@ Current key fields:
 - `slug`: Public URL slug.
 - `sponsorType`: Organization, foundation, individual, family, institution, or campaign.
 - `summary`: Short public sponsor description.
+- `gratitudeStatement`: Public gratitude copy shown near the top of the sponsor page.
+- `focus`: Short public focus line for sponsor cards and the sponsor page aside.
+- `impactHighlights`: Repeatable public impact cards with label, value, and body.
+- `recognitionPoints`: Repeatable sponsor recognition bullets.
+- `detailSections`: Repeatable long-form public sections for context, references, or program notes.
 - `websiteUrl`: External sponsor website.
 - `logo`: Media relation for logo.
 - `homepageAdEnabled`: Allows homepage sponsor stack placement.
@@ -318,6 +323,8 @@ Why these fields exist:
 - Sponsors need public pages, homepage ad placement, and direct relationships to funded/supported content.
 - Sponsors may need CTA links for lead generation or visibility.
 - Editorial independence must remain visible: sponsor support does not bypass editorial review.
+- Public sponsor pages now use published Payload records first. Static sponsor rows are retained only as local/demo fallback when CMS data is empty or temporarily unavailable.
+- Draft sponsor records remain hidden from public sponsor listing/detail routes because the frontend data layer only queries `workflowStatus = published`.
 
 Current public sponsor page model:
 
@@ -740,12 +747,13 @@ Recommended sponsor content workflow:
 
 1. Create sponsor record in Admin.
 2. Add sponsor name, slug, type, summary, website, logo/banner.
-3. Add verified public details only from approved documents or credible sources.
-4. Add CTA links such as sponsor website, campaign page, inquiry page, brochure, or phone/email.
-5. Connect sponsored people, stories, articles, essays, or pages.
-6. Set homepage ad placement and order if sponsor should appear on the homepage.
-7. Editor reviews copy.
-8. Publisher publishes.
+3. Add gratitude statement, public focus line, impact highlight cards, recognition points, and detail sections.
+4. Add verified public details only from approved documents or credible sources.
+5. Add CTA links such as sponsor website, campaign page, inquiry page, brochure, or phone/email.
+6. Connect sponsored people, stories, articles, essays, or pages.
+7. Set homepage ad placement and order if sponsor should appear on the homepage.
+8. Editor reviews copy and confirms that claims are source-backed.
+9. Publisher publishes. Draft sponsors remain private and do not appear on public sponsor pages.
 
 Current sponsor page presentation requirements:
 
@@ -953,7 +961,7 @@ Mobile:
 
 These items were open at the time this document was created:
 
-1. Enrich sponsor schema and sponsor pages with verified claims, CTA blocks, source-backed public details, and internal research notes.
+1. Add source-link-backed verified sponsor claims, richer CTA blocks, and internal research notes beyond the current gratitude/focus/highlight/recognition CMS fields.
 2. Continue CMS-to-frontend cutover beyond People into Stories, Articles, search, and homepage data.
 3. Verify `Homepage & Branding` loads and saves for non-technical admin users after each Payload schema/admin change.
 4. Continue adding verified person-specific videos per personality/story. The system now shows placeholders where no approved video exists and avoids generic fallback embeds.

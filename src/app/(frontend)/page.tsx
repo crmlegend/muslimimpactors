@@ -3,6 +3,7 @@ import config from '@payload-config'
 import { getPayload } from 'payload'
 
 import ArchiveExperience from './ArchiveExperience'
+import { getPublicSponsors } from './content'
 import './styles.css'
 
 export const dynamic = 'force-dynamic'
@@ -133,7 +134,7 @@ const getHomepageSettings = async () => {
 }
 
 export default async function HomePage() {
-  const settings = await getHomepageSettings()
+  const [settings, sponsors] = await Promise.all([getHomepageSettings(), getPublicSponsors()])
 
-  return <ArchiveExperience settings={settings} />
+  return <ArchiveExperience settings={{ ...(settings || {}), sponsors }} />
 }

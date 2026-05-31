@@ -1,15 +1,19 @@
 import config from '@payload-config'
 import { getPayload } from 'payload'
 
-import type { Media, Occupation, Person, Place, Topic } from '@/payload-types'
+import type { Media, Occupation, Person, Place, Sponsor, Story, Topic } from '@/payload-types'
 import type { Where } from 'payload'
 
 import {
   initialsFor,
   personalities as staticPersonalities,
+  sponsorRows,
+  storyRows,
   slugify,
   type ArchiveTrack,
   type Personality,
+  type SponsorRow,
+  type StoryRow,
 } from './archiveData'
 
 type RelationshipValue<T> = number | T
@@ -38,6 +42,15 @@ const archiveTrackLabels: Record<ArchiveTrack, string> = {
   global_modern_impact: 'Global modern impact',
   golden_age_history: 'Golden Age history',
   other: 'Archive profile',
+}
+
+const sponsorTypeLabels: Record<Sponsor['sponsorType'], string> = {
+  campaign: 'Campaign',
+  family: 'Family',
+  foundation: 'Foundation',
+  individual: 'Individual',
+  institution: 'Institution',
+  organization: 'Organization',
 }
 
 const tones = ['#0D76BC', '#173653', '#F2673C', '#DF5A32', '#4B8DC4', '#5D6F7F', '#C95135']
@@ -69,6 +82,12 @@ const toneForSlug = (slug: string) => {
 const themeForTrack = (archiveTrack: ArchiveTrack): Personality['theme'] =>
   archiveTrack === 'golden_age_history' ? 'muslims_in_history' : 'american_muslims'
 
+const nonEmptyText = (value?: string | null) => {
+  const text = value?.trim()
+
+  return text || undefined
+}
+
 const lexicalText = (node: unknown): string => {
   if (!node || typeof node !== 'object') {
     return ''
@@ -87,7 +106,9 @@ const lexicalText = (node: unknown): string => {
   return ''
 }
 
-const richTextToPlainText = (value: Person['fullBio']) => {
+type LexicalValue = { root?: { children?: unknown } } | null | undefined
+
+const richTextToPlainText = (value: LexicalValue) => {
   const root = value?.root as { children?: unknown } | undefined
 
   if (!Array.isArray(root?.children)) {
@@ -155,6 +176,124 @@ const mapCMSPersonality = (person: Person, index: number): Personality => {
   }
 }
 
+const fallbackSponsorPeople = (sponsor: Pick<SponsorRow, 'slug'>) =>
+  staticPersonalities
+    .filter((person, index) => (index + sponsor.slug.length) % sponsorRows.length === 0)
+    .slice(0, 6)
+
+const fallbackSponsorStories = (sponsor: Pick<SponsorRow, 'slug'>) =>
+  storyRows
+    .filter((story, index) => (index + sponsor.slug.length) % sponsorRows.length === 0)
+    .slice(0, 5)
+
+const durationLabel = (durationSeconds?: number | null) => {
+  if (!durationSeconds || durationSeconds <= 0) {
+    return undefined
+  }
+
+  const minutes = Math.max(1, Math.round(durationSeconds / 60))
+
+  return `${minutes} min`
+}
+
+const mapCMSStoryRow = (story: Story, index: number): StoryRow => {
+  const staticMatch = storyRows.find((item) => item.slug === story.slug)
+  const primaryPerson = isObjectRelation<Person>(story.primaryPerson)
+    ? mapCMSPersonality(story.primaryPerson, index)
+    : undefined
+
+  return {
+    body: richTextToPlainText(story.body) || staticMatch?.body || story.summary,
+    embedId: story.youtubeEmbedId || staticMatch?.embedId,
+    href: `/stories/${story.slug}`,
+    length: durationLabel(story.durationSeconds) || staticMatch?.length || 'Story chapter',
+    name: primaryPerson?.name || staticMatch?.name || 'Archive record',
+    role: primaryPerson?.role || staticMatch?.role || 'Story record',
+    slug: story.slug,
+    story: story.title,
+    summary: story.summary,
+  }
+}
+
+const mapCMSSponsor = (sponsor: Sponsor, _index: number): SponsorRow => {
+  const staticMatch = sponsorRows.find((item) => item.slug === sponsor.slug)
+  const fallbackForRelationships = staticMatch || {
+    slug: sponsor.slug,
+  }
+  const relationshipPeople =
+    sponsor.sponsoredPeople
+      ?.filter(isObjectRelation<Person>)
+      .filter((person) => person.workflowStatus === 'published')
+      .map(mapCMSPersonality)
+      .slice(0, 6) || []
+  const relationshipStories =
+    sponsor.sponsoredStories
+      ?.filter(isObjectRelation<Story>)
+      .filter((story) => story.workflowStatus === 'published')
+      .map(mapCMSStoryRow)
+      .slice(0, 5) || []
+  const detailSections =
+    sponsor.detailSections
+      ?.map((section) => ({
+        body: nonEmptyText(section.body),
+        heading: nonEmptyText(section.heading),
+      }))
+      .filter((section): section is { body: string; heading: string } =>
+        Boolean(section.body && section.heading),
+      ) ||
+    staticMatch?.details ||
+    (sponsor.sponsorPageDetails
+      ? [
+          {
+            body: sponsor.sponsorPageDetails,
+            heading: 'Overview',
+          },
+        ]
+      : undefined)
+  const impactHighlights =
+    sponsor.impactHighlights
+      ?.map((highlight) => ({
+        body: nonEmptyText(highlight.body),
+        label: nonEmptyText(highlight.label),
+        value: nonEmptyText(highlight.value),
+      }))
+      .filter((highlight): highlight is { body: string; label: string; value: string } =>
+        Boolean(highlight.body && highlight.label && highlight.value),
+      ) || staticMatch?.impactHighlights
+  const recognitionPoints =
+    sponsor.recognitionPoints?.map((item) => nonEmptyText(item.point)).filter(Boolean) ||
+    staticMatch?.recognitionPoints
+
+  return {
+    adLabel: sponsor.bannerLabel || staticMatch?.adLabel,
+    bannerImage: mediaURL(sponsor.bannerImage) || mediaURL(sponsor.logo) || staticMatch?.bannerImage,
+    details: detailSections,
+    focus:
+      nonEmptyText(sponsor.focus) ||
+      staticMatch?.focus ||
+      'Sponsor support connected to public archive presentation.',
+    gratitudeStatement: sponsor.gratitudeStatement || staticMatch?.gratitudeStatement,
+    href: `/sponsors/${sponsor.slug}`,
+    impactHighlights,
+    name: sponsor.name,
+    recognitionPoints: recognitionPoints as string[] | undefined,
+    slug: sponsor.slug,
+    sponsoredPeople: relationshipPeople.length
+      ? relationshipPeople
+      : fallbackSponsorPeople(fallbackForRelationships),
+    sponsoredStories: relationshipStories.length
+      ? relationshipStories
+      : fallbackSponsorStories(fallbackForRelationships),
+    summary: sponsor.summary,
+    type: sponsorTypeLabels[sponsor.sponsorType],
+    websiteLabel:
+      sponsor.primaryCallToActionLabel ||
+      staticMatch?.websiteLabel ||
+      (sponsor.websiteUrl ? 'Visit sponsor website' : undefined),
+    websiteUrl: sponsor.primaryCallToActionUrl || sponsor.websiteUrl || staticMatch?.websiteUrl,
+  }
+}
+
 const findCMSPersonalities = async (where?: Where) => {
   const payload = await getPayload({ config })
 
@@ -164,6 +303,23 @@ const findCMSPersonalities = async (where?: Where) => {
     limit: 300,
     pagination: false,
     sort: 'name',
+    where: where || {
+      workflowStatus: {
+        equals: 'published',
+      },
+    },
+  })
+}
+
+const findCMSSponsors = async (where?: Where) => {
+  const payload = await getPayload({ config })
+
+  return payload.find({
+    collection: 'sponsors',
+    depth: 2,
+    limit: 100,
+    pagination: false,
+    sort: 'adPlacementOrder',
     where: where || {
       workflowStatus: {
         equals: 'published',
@@ -206,6 +362,43 @@ export const getPublicPersonalityBySlug = async (slug: string) => {
   } catch (error) {
     console.error(`Falling back to static personality "${slug}" after CMS query failed`, error)
     return staticPersonalities.find((item) => item.slug === slug)
+  }
+}
+
+export const getPublicSponsors = async () => {
+  try {
+    const result = await findCMSSponsors()
+    const cmsSponsors = result.docs.map(mapCMSSponsor)
+
+    return cmsSponsors.length ? cmsSponsors : sponsorRows
+  } catch (error) {
+    console.error('Falling back to static sponsors after CMS query failed', error)
+    return sponsorRows
+  }
+}
+
+export const getPublicSponsorBySlug = async (slug: string) => {
+  try {
+    const result = await findCMSSponsors({
+      and: [
+        {
+          slug: {
+            equals: slug,
+          },
+        },
+        {
+          workflowStatus: {
+            equals: 'published',
+          },
+        },
+      ],
+    })
+    const sponsor = result.docs[0]
+
+    return sponsor ? mapCMSSponsor(sponsor, 0) : sponsorRows.find((item) => item.slug === slug)
+  } catch (error) {
+    console.error(`Falling back to static sponsor "${slug}" after CMS query failed`, error)
+    return sponsorRows.find((item) => item.slug === slug)
   }
 }
 

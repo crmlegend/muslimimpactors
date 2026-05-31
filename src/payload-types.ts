@@ -717,6 +717,44 @@ export interface Sponsor {
    */
   summary: string;
   /**
+   * Public gratitude copy shown near the top of the sponsor page.
+   */
+  gratitudeStatement?: string | null;
+  /**
+   * Short public focus line for sponsor cards and the sponsor page aside.
+   */
+  focus?: string | null;
+  /**
+   * Source-safe public impact cards for the sponsor detail page.
+   */
+  impactHighlights?:
+    | {
+        label: string;
+        value: string;
+        body: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Bullet points recognizing sponsor support without unsupported claims.
+   */
+  recognitionPoints?:
+    | {
+        point: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Long-form public sections for sponsor context, references, or program notes.
+   */
+  detailSections?:
+    | {
+        heading: string;
+        body: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
    * Optional public sponsor website.
    */
   websiteUrl?: string | null;
@@ -2142,6 +2180,29 @@ export interface SponsorsSelect<T extends boolean = true> {
   slug?: T;
   sponsorType?: T;
   summary?: T;
+  gratitudeStatement?: T;
+  focus?: T;
+  impactHighlights?:
+    | T
+    | {
+        label?: T;
+        value?: T;
+        body?: T;
+        id?: T;
+      };
+  recognitionPoints?:
+    | T
+    | {
+        point?: T;
+        id?: T;
+      };
+  detailSections?:
+    | T
+    | {
+        heading?: T;
+        body?: T;
+        id?: T;
+      };
   websiteUrl?: T;
   logo?: T;
   homepageAdEnabled?: T;

@@ -2,9 +2,13 @@ import Link from 'next/link'
 import React from 'react'
 
 import ArchiveHeader from '../ArchiveHeader'
-import { sponsorRows } from '../archiveData'
+import { getPublicSponsors } from '../content'
 
-export default function SponsorsPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function SponsorsPage() {
+  const sponsors = await getPublicSponsors()
+
   return (
     <div className="archive-shell">
       <ArchiveHeader />
@@ -20,7 +24,7 @@ export default function SponsorsPage() {
         </section>
 
         <section className="directory-grid">
-          {sponsorRows.map((sponsor) => (
+          {sponsors.map((sponsor) => (
             <Link className="directory-card sponsor-card" href={sponsor.href} key={sponsor.slug}>
               <small>{sponsor.type}</small>
               <h2>{sponsor.name}</h2>

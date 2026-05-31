@@ -15,6 +15,7 @@ import {
   popularPersonalities,
   sponsorRows,
   storyRows,
+  type SponsorRow,
 } from './archiveData'
 import { logVisitorEvent } from './visitorEvents'
 
@@ -44,6 +45,7 @@ type ArchiveExperienceSettings = {
   recommendedStorySlugs?: string[]
   sponsorLabels?: Record<string, string>
   sponsorSlugs?: string[]
+  sponsors?: SponsorRow[]
 }
 
 type ArchiveExperienceProps = {
@@ -141,11 +143,12 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
   const recommendedStories = configuredRecommendedStories.length
     ? configuredRecommendedStories
     : storyRows.slice(0, 6)
+  const sponsorSource = settings?.sponsors?.length ? settings.sponsors : sponsorRows
   const configuredSponsorAds =
     settings?.sponsorSlugs
-      ?.map((slug) => sponsorRows.find((sponsor) => sponsor.slug === slug))
+      ?.map((slug) => sponsorSource.find((sponsor) => sponsor.slug === slug))
       .filter(isDefined) || []
-  const sponsorAds = configuredSponsorAds.length ? configuredSponsorAds : sponsorRows
+  const sponsorAds = configuredSponsorAds.length ? configuredSponsorAds : sponsorSource
   const brandStyle = {
     '--brand-light': settings?.brandColors?.lightAccentColor || '#E1DFDE',
     '--brand-neutral': settings?.brandColors?.neutralColor || '#FFFFFF',

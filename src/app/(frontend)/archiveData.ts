@@ -90,6 +90,8 @@ export type SponsorRow = {
   name: string
   recognitionPoints?: string[]
   slug: string
+  sponsoredPeople?: Personality[]
+  sponsoredStories?: StoryRow[]
   summary: string
   type: string
   websiteLabel?: string

@@ -43,6 +43,51 @@ export const Sponsors: CollectionConfig = {
       },
     },
     {
+      name: 'gratitudeStatement',
+      type: 'textarea',
+      admin: {
+        description: 'Public gratitude copy shown near the top of the sponsor page.',
+      },
+    },
+    {
+      name: 'focus',
+      type: 'text',
+      admin: {
+        description: 'Short public focus line for sponsor cards and the sponsor page aside.',
+      },
+    },
+    {
+      name: 'impactHighlights',
+      type: 'array',
+      admin: {
+        description: 'Source-safe public impact cards for the sponsor detail page.',
+      },
+      fields: [
+        { name: 'label', type: 'text', required: true },
+        { name: 'value', type: 'text', required: true },
+        { name: 'body', type: 'textarea', required: true },
+      ],
+    },
+    {
+      name: 'recognitionPoints',
+      type: 'array',
+      admin: {
+        description: 'Bullet points recognizing sponsor support without unsupported claims.',
+      },
+      fields: [{ name: 'point', type: 'text', required: true }],
+    },
+    {
+      name: 'detailSections',
+      type: 'array',
+      admin: {
+        description: 'Long-form public sections for sponsor context, references, or program notes.',
+      },
+      fields: [
+        { name: 'heading', type: 'text', required: true },
+        { name: 'body', type: 'textarea', required: true },
+      ],
+    },
+    {
       name: 'websiteUrl',
       type: 'text',
       admin: {

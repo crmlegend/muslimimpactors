@@ -135,12 +135,14 @@ const upsertByField = async ({
   data,
   field,
   payload,
+  user,
   value,
 }: {
   collection: SeedCollectionSlug
   data: Record<string, unknown>
   field: string
   payload: Awaited<ReturnType<typeof getPayload>>
+  user?: Record<string, unknown>
   value: number | string
 }): Promise<SeedDoc> => {
   const api = payload as never as {
@@ -162,6 +164,7 @@ const upsertByField = async ({
       data,
       id: existing.docs[0].id,
       overrideAccess: true,
+      ...(user ? { user } : {}),
     })
   }
 
@@ -169,6 +172,7 @@ const upsertByField = async ({
     collection,
     data,
     overrideAccess: true,
+    ...(user ? { user } : {}),
   })
 }
 
@@ -176,11 +180,13 @@ const upsertBySlug = async ({
   collection,
   data,
   payload,
+  user,
 }: {
   collection: SeedCollectionSlug
   data: Record<string, unknown> & { slug: string }
   payload: Awaited<ReturnType<typeof getPayload>>
-}) => upsertByField({ collection, data, field: 'slug', payload, value: data.slug })
+  user?: Record<string, unknown>
+}) => upsertByField({ collection, data, field: 'slug', payload, user, value: data.slug })
 
 const createMediaIfMissing = async ({
   data,
@@ -919,19 +925,31 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
   const personIdList = Array.from(personIds.values())
   const storyIdList = Array.from(storyIds.values())
   const articleIdList = Array.from(articleIds.values())
+  const publisherUser = {
+    email: 'publisher.admin@epoch.local',
+    id: userIds.get('publisher_admin'),
+    role: 'publisher_admin',
+  }
 
   for (const sponsor of sponsorRows) {
     const sponsorRecord = await upsertBySlug({
       collection: 'sponsors',
       data: {
-        editorApproved: false,
+        detailSections: sponsor.details,
+        editorApproved: true,
+        editorApprovedAt: new Date().toISOString(),
+        editorApprovedBy: publisherUser.id,
+        focus: sponsor.focus,
+        gratitudeStatement: sponsor.gratitudeStatement,
         name: sponsor.name,
         adPlacementOrder: sponsorRows.findIndex((item) => item.slug === sponsor.slug) + 1,
         bannerLabel: sponsor.adLabel,
         homepageAdEnabled: true,
+        impactHighlights: sponsor.impactHighlights,
         primaryCallToActionLabel: sponsor.websiteLabel,
         primaryCallToActionUrl: sponsor.websiteUrl,
         publicCreditLine: `Research support provided by ${sponsor.name}.`,
+        recognitionPoints: sponsor.recognitionPoints?.map((point) => ({ point })),
         slug: sponsor.slug,
         sponsorType:
           sponsor.type === 'Campaign'
@@ -945,9 +963,10 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
         sponsorPageDetails: sponsor.details?.map((detail) => `${detail.heading}: ${detail.body}`).join('\n\n'),
         summary: sponsor.summary,
         websiteUrl: sponsor.websiteUrl,
-        workflowStatus: 'draft',
+        workflowStatus: 'published',
       },
       payload,
+      user: publisherUser,
     })
 
     sponsorIds.set(sponsor.slug, sponsorRecord.id)

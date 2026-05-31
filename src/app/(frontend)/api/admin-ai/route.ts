@@ -317,8 +317,29 @@ export const POST = async (request: NextRequest) => {
           collection: 'sponsors',
           data: {
             bannerLabel: 'Sponsor research draft',
+            detailSections: [
+              {
+                body: 'Draft sponsor profile created by the Admin AI Command Center. Add verified humanitarian work, Muslim community relevance, official links, and approved public claims before publishing.',
+                heading: 'Sponsor research draft',
+              },
+            ],
+            focus: 'Pending sponsor research and source review.',
+            gratitudeStatement:
+              'This draft is prepared for sponsor recognition after admin review and source-backed public copy.',
             homepageAdEnabled: false,
+            impactHighlights: [
+              {
+                body: 'Add official references and approved sponsor-provided materials before publishing this public claim.',
+                label: 'Review status',
+                value: 'Draft',
+              },
+            ],
             name,
+            recognitionPoints: [
+              {
+                point: 'Prepared for verified sponsor recognition after editorial review.',
+              },
+            ],
             slug,
             sponsorPageDetails:
               'Draft sponsor profile created by the Admin AI Command Center. Add verified humanitarian work, Muslim community relevance, official links, and approved public claims before publishing.',

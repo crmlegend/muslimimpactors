@@ -4,6 +4,7 @@ import React from 'react'
 
 import ArchiveHeader from '../../ArchiveHeader'
 import { personalities, sponsorRows, storyRows } from '../../archiveData'
+import { getPublicSponsorBySlug } from '../../content'
 
 type SponsorDetailPageProps = {
   params: Promise<{
@@ -11,13 +12,11 @@ type SponsorDetailPageProps = {
   }>
 }
 
-export function generateStaticParams() {
-  return sponsorRows.map((sponsor) => ({ slug: sponsor.slug }))
-}
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: SponsorDetailPageProps) {
   const { slug } = await params
-  const sponsor = sponsorRows.find((item) => item.slug === slug)
+  const sponsor = await getPublicSponsorBySlug(slug)
 
   if (!sponsor) {
     return {}
@@ -31,18 +30,22 @@ export async function generateMetadata({ params }: SponsorDetailPageProps) {
 
 export default async function SponsorDetailPage({ params }: SponsorDetailPageProps) {
   const { slug } = await params
-  const sponsor = sponsorRows.find((item) => item.slug === slug)
+  const sponsor = await getPublicSponsorBySlug(slug)
 
   if (!sponsor) {
     notFound()
   }
 
-  const sponsoredPeople = personalities
-    .filter((person, index) => (index + sponsor.slug.length) % sponsorRows.length === 0)
-    .slice(0, 6)
-  const sponsoredStories = storyRows
-    .filter((story, index) => (index + sponsor.slug.length) % sponsorRows.length === 0)
-    .slice(0, 5)
+  const sponsoredPeople = sponsor.sponsoredPeople?.length
+    ? sponsor.sponsoredPeople
+    : personalities
+        .filter((person, index) => (index + sponsor.slug.length) % sponsorRows.length === 0)
+        .slice(0, 6)
+  const sponsoredStories = sponsor.sponsoredStories?.length
+    ? sponsor.sponsoredStories
+    : storyRows
+        .filter((story, index) => (index + sponsor.slug.length) % sponsorRows.length === 0)
+        .slice(0, 5)
   const impactHighlights = sponsor.impactHighlights || [
     {
       body: 'Sponsor support helps keep research, public presentation, and community-facing education moving forward.',
