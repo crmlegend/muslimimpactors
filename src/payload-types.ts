@@ -3004,12 +3004,12 @@ export interface SiteSetting {
       | null;
   };
   /**
-   * Safe request area for admins to describe UI/UX changes. Requests are stored for review and do not automatically alter code or backend behavior.
+   * Legacy note area. Super admins should use /admin-ai for preview/execute CMS commands; code, schema, permission, and deployment requests are still stored for review.
    */
   aiDesignAssistant?: {
     enabled?: boolean | null;
     /**
-     * Describe the desired change in plain language. An editor/developer can review this and convert it into a controlled implementation task.
+     * For executable super-admin CMS commands, open /admin-ai. Use this field only for persistent notes or developer review requests.
      */
     latestRequest?: string | null;
     guardrails?: string | null;

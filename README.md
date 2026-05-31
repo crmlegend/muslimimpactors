@@ -2,7 +2,7 @@
 
 Working-title prototype for a research-based public archive of Muslim public service, humanitarian contribution, civic life, scholarship, culture, sources, expert essays, media, and story-led historical context.
 
-The app is scaffolded with Next.js and Payload CMS. Local development defaults to SQLite so the admin workspace can run immediately without Docker; Postgres remains supported by changing `DATABASE_URL`. Public visitors can register interest, submit contributor applications, and ask the local archive assistant, while internal users manage public personalities, stories, wiki-style articles, sources, sponsors, media rights, expert essays, page-builder pages, AI jobs, and LinkedIn/X social-post drafts.
+The app is scaffolded with Next.js and Payload CMS. Local development defaults to SQLite so the admin workspace can run immediately without Docker; Postgres remains supported by changing `DATABASE_URL`. Public visitors can register interest, submit contributor applications, and ask the local archive assistant, while internal users manage public personalities, stories, wiki-style articles, sources, sponsors, media rights, expert essays, page-builder pages, AI jobs, LinkedIn/X social-post drafts, and controlled super-admin CMS commands.
 
 Preferred launch subdomain: `https://muslimimpactors.americanmotivations.com`.
 
@@ -32,6 +32,7 @@ On the first admin visit, Payload will ask you to create the first user. Give th
 - Search UX: interactive top search preview with grouped results.
 - Public routes: `/stories`, `/stories/[slug]`, `/articles`, `/articles/[slug]`, `/personalities`, `/personalities/[slug]`, `/muslims-in-history`, `/contributors`, `/sponsors`, `/themes`, `/timelines`, `/sources`, `/blog`, `/ask`, `/search`, and `/workflow`.
 - Public people routes read published Payload records first, then fall back to static seed data when CMS data is unavailable.
+- Super-admin operations: `/admin-ai` previews and executes whitelisted CMS changes such as bulk archive-track edits, external video updates, draft sponsor creation, and draft source creation.
 - Internal social publishing: LinkedIn and X draft/schedule records.
 - Expert essay workflow: editor uploads Word/PDF, edits draft, checks Expert Approved, previews supported public routes, then rights and publisher gates apply.
 
@@ -122,7 +123,8 @@ Then add `muslimimpactors.americanmotivations.com` as the custom domain and crea
 7. Click `Admin`, create or sign in as a Super Admin, then create test records in Public Personalities, Sources, Sponsors, Media, Stories, Articles, and Expert Essays.
 8. In Expert Essays, use the editor upload/draft fields to attach a Word/PDF submission, paste or extract text into the editable draft, and check `Expert Approved` when the expert-approved version is ready.
 9. Use the Preview button on People, Stories, Articles, Pages, and Expert Essays to inspect the public route before publishing.
-10. Try publishing as a non-publisher role and then as a Publisher/Admin role to verify the approval gate behavior.
+10. Open `/admin-ai` as a Super Admin, preview a safe command, and execute only after the operation list is correct.
+11. Try publishing as a non-publisher role and then as a Publisher/Admin role to verify the approval gate behavior.
 
 ## Next Build Steps
 

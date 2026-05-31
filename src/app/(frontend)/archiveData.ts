@@ -80,8 +80,15 @@ export type SponsorRow = {
     heading: string
   }[]
   focus: string
+  gratitudeStatement?: string
   href: string
+  impactHighlights?: {
+    body: string
+    label: string
+    value: string
+  }[]
   name: string
+  recognitionPoints?: string[]
   slug: string
   summary: string
   type: string
@@ -1191,8 +1198,32 @@ export const sponsorRows: SponsorRow[] = [
   {
     adLabel: 'Travel partner',
     focus: 'Cultural travel and regional discovery support for public learning programs.',
+    gratitudeStatement:
+      'We are grateful for travel and culture partners who help make public learning, historical memory, and community-facing storytelling easier to sustain.',
     href: '/sponsors/switzerland-of-asia',
+    impactHighlights: [
+      {
+        body: 'Sponsor support helps the archive explain place, travel, culture, and public memory for wider audiences.',
+        label: 'Archive support',
+        value: 'Cultural learning',
+      },
+      {
+        body: 'The page is structured to receive verified destination, hospitality, and community-benefit details as they are approved.',
+        label: 'Review status',
+        value: 'Ready for evidence',
+      },
+      {
+        body: 'Sponsor credit remains visibly separated from editorial approval and rights review.',
+        label: 'Trust model',
+        value: 'Independent review',
+      },
+    ],
     name: 'Switzerland of Asia',
+    recognitionPoints: [
+      'Supports public learning around travel, culture, and regional discovery.',
+      'Can be connected to approved events, stories, or public education pages.',
+      'Sponsor claims remain evidence-backed before publication.',
+    ],
     slug: 'switzerland-of-asia',
     summary:
       'Sponsor placement for travel, hospitality, and cultural destination support connected to public education and documentary storytelling.',
@@ -1211,9 +1242,33 @@ export const sponsorRows: SponsorRow[] = [
       },
     ],
     focus: 'Development visibility and sponsor support for public archive presentation.',
+    gratitudeStatement:
+      'With appreciation to Hashim Group for supporting the public presentation of Muslim civic service, cultural memory, and educational archive work.',
     href: '/sponsors/hashim-group',
     bannerImage: '/hashim-group-banner.png',
+    impactHighlights: [
+      {
+        body: 'Support helps present biographies, stories, and source-backed civic-impact records in a more visible public format.',
+        label: 'Public benefit',
+        value: 'Archive visibility',
+      },
+      {
+        body: 'The sponsor page is ready for verified humanitarian, community, or Muslim-facing work once approved sources are added.',
+        label: 'Humanity work',
+        value: 'Evidence pending',
+      },
+      {
+        body: 'Sponsor recognition is shown with gratitude while keeping editorial independence explicit.',
+        label: 'Recognition',
+        value: 'Thanked clearly',
+      },
+    ],
     name: 'Hashim Group',
+    recognitionPoints: [
+      'Recognized for supporting public archive presentation and sponsor visibility.',
+      'Connected records show the type of people and stories sponsor support helps surface.',
+      'Future verified claims can be added as source-backed impact highlights.',
+    ],
     slug: 'hashim-group',
     summary:
       'Hashim Group sponsor page with document-derived public overview fields prepared for admin review and future expansion.',
@@ -1224,8 +1279,32 @@ export const sponsorRows: SponsorRow[] = [
   {
     adLabel: 'Community benefit',
     focus: 'Health, public benefit, and community-facing research support.',
+    gratitudeStatement:
+      'We appreciate partners focused on health, welfare, and community benefit because that support strengthens the public-service purpose of the archive.',
     href: '/sponsors/patient-benefits-foundation',
+    impactHighlights: [
+      {
+        body: 'Sponsor support helps document service, care, and public-benefit records for community audiences.',
+        label: 'Service frame',
+        value: 'Health and welfare',
+      },
+      {
+        body: 'Public claims can be expanded with approved program details, reports, and source notes.',
+        label: 'Evidence model',
+        value: 'Source-backed',
+      },
+      {
+        body: 'The sponsor record can connect directly to supported people, stories, essays, and pages.',
+        label: 'CMS link',
+        value: 'Connected support',
+      },
+    ],
     name: 'Patient Benefits Foundation',
+    recognitionPoints: [
+      'Reserved for health, welfare, and public-benefit sponsor recognition.',
+      'Built to showcase verified charitable work once approved details are entered.',
+      'Can connect sponsor credit directly to supported archive records.',
+    ],
     slug: 'patient-benefits-foundation',
     summary:
       'Sponsor placement for health, welfare, and public-benefit initiatives connected to community service documentation.',
@@ -1234,8 +1313,32 @@ export const sponsorRows: SponsorRow[] = [
   {
     adLabel: 'Airline partner',
     focus: 'Travel access and international connectivity for public programming.',
+    gratitudeStatement:
+      'We are grateful for travel and connectivity partners who can help bring public programming, sponsor events, and cross-cultural learning within reach.',
     href: '/sponsors/emirates',
+    impactHighlights: [
+      {
+        body: 'Travel support can help connect scholars, sponsors, and community audiences across regions.',
+        label: 'Connectivity',
+        value: 'Global access',
+      },
+      {
+        body: 'The record is prepared for verified corporate responsibility and community-work references before any claim is published.',
+        label: 'Claim status',
+        value: 'Needs review',
+      },
+      {
+        body: 'Sponsor placement can support review events, interviews, documentation, and public programming.',
+        label: 'Program support',
+        value: 'Events and access',
+      },
+    ],
     name: 'Emirates',
+    recognitionPoints: [
+      'Prepared for airline and travel-connectivity sponsor recognition.',
+      'Can be enriched with verified humanitarian or community work from approved sources.',
+      'Useful for sponsor event, travel, and international-programming visibility.',
+    ],
     slug: 'emirates',
     summary:
       'Sponsor placement for global travel and international connectivity support around review events and public programming.',

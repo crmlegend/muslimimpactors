@@ -84,6 +84,7 @@ export default buildConfig({
   admin: {
     user: Users.slug,
     components: {
+      afterNavLinks: ['/app/(payload)/components/AdminAIAdminLink#AdminAIAdminLink'],
       graphics: {
         Icon: '/app/(payload)/components/MuslimImpactorsAdminBrand#MuslimImpactorsAdminIcon',
         Logo: '/app/(payload)/components/MuslimImpactorsAdminBrand#MuslimImpactorsAdminLogo',

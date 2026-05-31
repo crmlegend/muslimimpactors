@@ -215,22 +215,22 @@ export const SiteSettings: GlobalConfig = {
       type: 'group',
       admin: {
         description:
-          'Safe request area for admins to describe UI/UX changes. Requests are stored for review and do not automatically alter code or backend behavior.',
+          'Legacy note area. Super admins should use /admin-ai for preview/execute CMS commands; code, schema, permission, and deployment requests are still stored for review.',
       },
       fields: [
         {
           name: 'enabled',
           type: 'checkbox',
           defaultValue: false,
-          label: 'Enable AI-assisted design review notes',
+          label: 'Enable AI-assisted admin notes',
         },
         {
           name: 'latestRequest',
           type: 'textarea',
-          label: 'Latest UI/UX change request',
+          label: 'Latest admin AI request note',
           admin: {
             description:
-              'Describe the desired change in plain language. An editor/developer can review this and convert it into a controlled implementation task.',
+              'For executable super-admin CMS commands, open /admin-ai. Use this field only for persistent notes or developer review requests.',
           },
         },
         {

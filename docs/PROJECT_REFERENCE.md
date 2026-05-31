@@ -1,6 +1,6 @@
 # Muslim Impactors Project Reference
 
-Last updated: 2026-05-30
+Last updated: 2026-05-31
 
 This document is the technical and editorial reference for Muslim Impactors. It explains what was built, how the public website and CMS connect, why the main database fields exist, how the content workflow works, and what a future developer must know before changing the system.
 
@@ -58,6 +58,8 @@ Important paths:
 - `src/collections/`: Payload collection definitions.
 - `src/globals/SiteSettings.ts`: Global homepage and branding controls.
 - `src/app/(frontend)/`: Public Next.js routes and public frontend components.
+- `src/app/(frontend)/admin-ai/`: Super-admin command center for controlled CMS operations.
+- `src/app/(frontend)/api/admin-ai/route.ts`: Preview/execute API for whitelisted admin CMS commands.
 - `src/app/(payload)/`: Payload API and admin routes.
 - `src/scripts/seedArchive.ts`: Demo/archive seed script.
 - `src/migrations/`: Postgres migrations used by production startup through Payload `prodMigrations`.
@@ -155,7 +157,7 @@ Articles and stories remain available as pages, but they should not dominate the
 - `/timelines`: Timeline/event index.
 - `/sources`: Public source/citation index.
 - `/sponsors`: Sponsor listing.
-- `/sponsors/[slug]`: Sponsor detail page.
+- `/sponsors/[slug]`: Sponsor detail page with gratitude copy, impact highlights, sponsor commendation, and source-backed trust notes.
 - `/contributors`: Contributor profile or contributor information page.
 - `/workflow`: Submission/review process page.
 - `/ask`: AI Ask demo page.
@@ -174,6 +176,7 @@ Articles and stories remain available as pages, but they should not dominate the
 - `/admin/collections/sponsors`: Sponsors.
 - `/admin/collections/sources`: Sources.
 - `/admin/globals/site-settings`: Homepage and branding settings.
+- `/admin-ai`: Super-admin-only Admin AI Command Center. Also linked from the Payload admin navigation for super admins.
 
 The admin shell and login view use Muslim Impactors branding through Payload admin graphic overrides.
 
@@ -315,6 +318,14 @@ Why these fields exist:
 - Sponsors need public pages, homepage ad placement, and direct relationships to funded/supported content.
 - Sponsors may need CTA links for lead generation or visibility.
 - Editorial independence must remain visible: sponsor support does not bypass editorial review.
+
+Current public sponsor page model:
+
+- Opens with gratitude and a plain-language explanation of what sponsor support helps make possible.
+- Shows impact highlight cards for archive visibility, community benefit, and review status.
+- Frames sponsor recognition as commendation without inventing unverified humanitarian or Muslim-community claims.
+- Shows linked profiles/stories as "work this support helps showcase" rather than implying ownership or editorial control.
+- Includes a trust panel explaining that public sponsor claims stay source-backed and sponsor edits are logged.
 
 Recommended next sponsor fields:
 
@@ -573,6 +584,20 @@ Why these fields exist:
 - AI output must be treated as a workflow artifact, not automatically published content.
 - This supports transparency, review, and future automation.
 
+Admin AI Command Center:
+
+- Route: `/admin-ai`.
+- Access: super admins only. Unauthenticated or non-super-admin users are redirected or rejected by the API.
+- Admin visibility: super admins get an "Admin AI Command Center" link in the Payload admin navigation.
+- API route: `/api/admin-ai`.
+- Every preview and execution request is stored in `AI Jobs` with the prompt and structured operation result.
+- Supported execute operations in the current controlled v0:
+  - Bulk-update `people.archiveTrack` for named people or all people when explicitly requested.
+  - Update external YouTube/video fields for named people.
+  - Create draft sponsor records from names.
+  - Create draft source records from supplied URLs.
+- Requests for code changes, schema changes, permission changes, secrets, deployments, or broad UI changes are captured as review jobs and are not directly executed from production chat.
+
 ### Social Accounts
 
 Purpose: Store social publishing account metadata and permissions.
@@ -660,13 +685,13 @@ Key groups:
 
 - `homepageCopy`: Wording for left Golden Age rail and right sponsor rail.
 - `homepage`: Featured personality, scheduled override, Editor's Pick, Golden Age highlights, recommended videos, sponsor ad slots.
-- `aiDesignAssistant`: Safe admin field for plain-language UI/UX change requests.
+- `aiDesignAssistant`: Legacy safe admin notes for plain-language UI/UX change requests. Super admins should use `/admin-ai` for preview/execute CMS commands.
 - `branding`: Dynamic color settings.
 
 Why these fields exist:
 
 - Admins need to change homepage selections, sponsor order, and brand colors without code changes.
-- AI design requests should be recorded safely, but not automatically mutate code or backend behavior.
+- AI design requests should be recorded safely. Only explicitly whitelisted CMS/data operations execute through `/admin-ai`; code and backend behavior requests stay review-only.
 
 ## 10. Data Relationships
 
@@ -721,6 +746,13 @@ Recommended sponsor content workflow:
 6. Set homepage ad placement and order if sponsor should appear on the homepage.
 7. Editor reviews copy.
 8. Publisher publishes.
+
+Current sponsor page presentation requirements:
+
+- The page should feel like a sponsor recognition and public gratitude page, not a placeholder CMS detail page.
+- It should explain how sponsor support helps the archive surface public-service stories, research, educational presentation, and community memory.
+- It should not claim specific humanitarian, Muslim-community, charitable, or business impact unless those claims have approved sources or sponsor-provided materials.
+- It should make editorial independence and auditability visible so sponsor recognition does not weaken public trust.
 
 AI-assisted sponsor research rule:
 

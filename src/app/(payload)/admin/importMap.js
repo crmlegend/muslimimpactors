@@ -23,6 +23,7 @@ import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { MuslimImpactorsAdminIcon as MuslimImpactorsAdminIcon_486a8f3eab58764707289d24b3657c7a } from '../../../app/(payload)/components/MuslimImpactorsAdminBrand'
 import { MuslimImpactorsAdminLogo as MuslimImpactorsAdminLogo_486a8f3eab58764707289d24b3657c7a } from '../../../app/(payload)/components/MuslimImpactorsAdminBrand'
+import { AdminAIAdminLink as AdminAIAdminLink_4b04fd40bd9d0f3b145fbb2a36d1a036 } from '../../../app/(payload)/components/AdminAIAdminLink'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
@@ -52,5 +53,6 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/app/(payload)/components/MuslimImpactorsAdminBrand#MuslimImpactorsAdminIcon": MuslimImpactorsAdminIcon_486a8f3eab58764707289d24b3657c7a,
   "/app/(payload)/components/MuslimImpactorsAdminBrand#MuslimImpactorsAdminLogo": MuslimImpactorsAdminLogo_486a8f3eab58764707289d24b3657c7a,
+  "/app/(payload)/components/AdminAIAdminLink#AdminAIAdminLink": AdminAIAdminLink_4b04fd40bd9d0f3b145fbb2a36d1a036,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }
