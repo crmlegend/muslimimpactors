@@ -101,6 +101,17 @@ const richTextToPlainText = (value: Person['fullBio']) => {
   return paragraphs.length ? paragraphs.join('\n\n') : undefined
 }
 
+const isStaleSeedVideo = (person: Person) => {
+  const note = person.externalVideoNote || ''
+
+  return Boolean(
+    person.youtubeEmbedId &&
+      (person.youtubeEmbedId === 'BpeZAm7rKHY' ||
+        note.startsWith('Theme-level seed embed') ||
+        note.startsWith('Person-specific seed embed')),
+  )
+}
+
 const mapCMSPersonality = (person: Person, index: number): Personality => {
   const staticMatch = staticPersonalities.find((item) => item.slug === person.slug)
   const archiveTrack = (person.archiveTrack || staticMatch?.archiveTrack || 'other') as ArchiveTrack
@@ -111,14 +122,19 @@ const mapCMSPersonality = (person: Person, index: number): Personality => {
   const category =
     person.scholarlyTradition || topicName || staticMatch?.category || archiveTrackLabels[archiveTrack]
   const region = person.nationality || person.birthPlace || placeName || staticMatch?.region || 'Archive'
+  const cmsVideoIsStale = isStaleSeedVideo(person)
 
   return {
     archiveTrack,
     category,
     editorsPick: staticMatch?.editorsPick || false,
     era: person.eraLabel || person.birthDateText || staticMatch?.era || 'Current',
-    externalVideoNote: person.externalVideoNote || undefined,
-    externalVideoSource: person.externalVideoSource || undefined,
+    externalVideoNote: cmsVideoIsStale
+      ? staticMatch?.externalVideoNote
+      : person.externalVideoNote || staticMatch?.externalVideoNote,
+    externalVideoSource: cmsVideoIsStale
+      ? staticMatch?.externalVideoSource
+      : person.externalVideoSource || staticMatch?.externalVideoSource,
     fullBio: richTextToPlainText(person.fullBio) || staticMatch?.fullBio,
     href: `/personalities/${person.slug}`,
     imageUrl: mediaURL(person.portrait) || staticMatch?.imageUrl,
@@ -133,7 +149,9 @@ const mapCMSPersonality = (person: Person, index: number): Personality => {
     todayRelevance: staticMatch?.todayRelevance,
     tone: staticMatch?.tone || toneForSlug(person.slug),
     wikipediaTitle: staticMatch?.wikipediaTitle || fallbackWikipediaTitle(person.name),
-    youtubeEmbedId: person.youtubeEmbedId || undefined,
+    youtubeEmbedId: cmsVideoIsStale
+      ? staticMatch?.youtubeEmbedId
+      : person.youtubeEmbedId || staticMatch?.youtubeEmbedId,
   }
 }
 

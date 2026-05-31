@@ -704,7 +704,7 @@ Bulk archive-track/data updates:
 
 - Payload can edit `archiveTrack` per People record. This project does not currently add a custom admin bulk-action UI for that field, so true bulk updates should use a committed migration or seed patch so the change is reviewable, repeatable, and deployable.
 - American civic impact profile enrichment is now centralized in `src/data/americanCivicProfiles.ts`.
-- Migration `20260530_153000_curate_american_civic_profiles` updates all 36 American civic impact profiles with curated Full Bio copy, corrected broad `personType` values, source URLs in `primaryWorks`, and a conservative video policy.
+- Migration `20260530_153000_curate_american_civic_profiles` is intentionally no-op after the first Railway deploy exposed Payload/Postgres runtime migration risk. The public app now applies the curated Full Bio copy and conservative video policy in the frontend mapping layer and the seed script keeps local/staging data repeatable.
 - The homepage civic/professional portrait set is driven by the 36-name static American civic profile order in `archiveData.ts`; the configured homepage featured-personality guard follows that same pool.
 
 ## 12. Sponsor Workflow
@@ -871,7 +871,7 @@ Current deployment note:
 - Commit `06dd404` adds the hydration-warning suppression/documentation pass after the May 30, 2026 local admin screenshot.
 - The May 30, 2026 Railway failure `Failed to collect page data for /api/visitor-event` was caused by `PAYLOAD_SECRET` being unavailable during the Docker build stage. The app now permits a build-only placeholder secret during `NEXT_PHASE=phase-production-build` while still requiring the real secret at runtime.
 - The May 30, 2026 live admin screenshot showing `Nothing found` at `/admin/globals/site-settings` was caused by production Postgres missing the `site_settings` global tables. Migration `20260530_142700_create_site_settings_global` creates the global table, sponsor-slot array table, relationship table, default settings row, constraints, and indexes.
-- The American civic impact content pass adds migration `20260530_153000_curate_american_civic_profiles`, the shared curated profile data file, Full Bio rendering on public personality pages, corrected person-type data for the 36 civic profiles, and removal of generic American Muslim video embeds from people/story records.
+- The American civic impact content pass adds the shared curated profile data file, Full Bio rendering on public personality pages, corrected public person-type fallback data for the 36 civic profiles, and frontend filtering so generic American Muslim video embeds from older CMS records are not rendered on personality/story pages.
 - If the live homepage has the reviewer layout but `/admin/login` still says `Login - Payload`, Railway is likely still serving an older build for the admin route or the deploy has not fully rolled forward. Check Railway build/deploy logs for the latest GitHub SHA before changing code.
 
 ## 18. QA Checklist
