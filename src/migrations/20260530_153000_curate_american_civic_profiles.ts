@@ -52,7 +52,9 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
         OR "external_video_note" ILIKE 'Theme-level seed embed%'
         OR "external_video_note" ILIKE 'Person-specific seed embed%'
       );
+  `)
 
+  await db.execute(sql`
     UPDATE "stories"
     SET
       "youtube_embed_id" = NULL,
@@ -95,4 +97,3 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
 export async function down({ db }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`SELECT 1;`)
 }
-
