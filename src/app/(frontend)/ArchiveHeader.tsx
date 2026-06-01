@@ -51,7 +51,6 @@ export default function ArchiveHeader() {
           <Link className="wordmark" href="/">
             Muslim Impactors
           </Link>
-          <span>Public Service Archive and Civic Impact Network</span>
         </div>
         <button
           aria-controls="archive-primary-nav"
