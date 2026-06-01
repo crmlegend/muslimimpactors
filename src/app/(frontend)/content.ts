@@ -328,6 +328,20 @@ const findCMSSponsors = async (where?: Where) => {
   })
 }
 
+const staticSponsorBySlug = new Map(sponsorRows.map((sponsor) => [sponsor.slug, sponsor]))
+
+const mergeSponsorsWithStaticFallback = (cmsSponsors: SponsorRow[]) => {
+  if (!cmsSponsors.length) {
+    return sponsorRows
+  }
+
+  const cmsBySlug = new Map(cmsSponsors.map((sponsor) => [sponsor.slug, sponsor]))
+  const mergedStaticSponsors = sponsorRows.map((sponsor) => cmsBySlug.get(sponsor.slug) || sponsor)
+  const cmsOnlySponsors = cmsSponsors.filter((sponsor) => !staticSponsorBySlug.has(sponsor.slug))
+
+  return [...mergedStaticSponsors, ...cmsOnlySponsors]
+}
+
 export const getPublicPersonalities = async () => {
   try {
     const result = await findCMSPersonalities()
@@ -370,7 +384,7 @@ export const getPublicSponsors = async () => {
     const result = await findCMSSponsors()
     const cmsSponsors = result.docs.map(mapCMSSponsor)
 
-    return cmsSponsors.length ? cmsSponsors : sponsorRows
+    return mergeSponsorsWithStaticFallback(cmsSponsors)
   } catch (error) {
     console.error('Falling back to static sponsors after CMS query failed', error)
     return sponsorRows
