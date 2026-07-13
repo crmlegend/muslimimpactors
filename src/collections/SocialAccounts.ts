@@ -21,6 +21,8 @@ export const SocialAccounts: CollectionConfig = {
       options: [
         { label: 'LinkedIn', value: 'linkedin' },
         { label: 'X', value: 'x' },
+        { label: 'Facebook', value: 'facebook' },
+        { label: 'Instagram', value: 'instagram' },
       ],
       required: true,
     },

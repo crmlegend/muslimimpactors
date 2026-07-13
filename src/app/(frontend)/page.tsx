@@ -3,7 +3,7 @@ import config from '@payload-config'
 import { getPayload } from 'payload'
 
 import ArchiveExperience from './ArchiveExperience'
-import { getPublicSponsors } from './content'
+import { getPublicPersonalities, getPublicSponsors } from './content'
 import './styles.css'
 
 export const dynamic = 'force-dynamic'
@@ -134,7 +134,20 @@ const getHomepageSettings = async () => {
 }
 
 export default async function HomePage() {
-  const [settings, sponsors] = await Promise.all([getHomepageSettings(), getPublicSponsors()])
+  const [settings, personalities, sponsors] = await Promise.all([
+    getHomepageSettings(),
+    getPublicPersonalities(),
+    getPublicSponsors(),
+  ])
+  const homepagePersonalities = personalities.filter(
+    (person) =>
+      person.homepageDisplayEnabled &&
+      ['american_civic_impact', 'global_modern_impact'].includes(person.archiveTrack),
+  )
 
-  return <ArchiveExperience settings={{ ...(settings || {}), sponsors }} />
+  return (
+    <ArchiveExperience
+      settings={{ ...(settings || {}), personalities: homepagePersonalities, sponsors }}
+    />
+  )
 }

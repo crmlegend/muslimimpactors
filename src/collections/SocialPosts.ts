@@ -1,17 +1,17 @@
 import type { CollectionConfig } from 'payload'
 
-import { internalOnly, isPublisherRole, isEditorialRole } from '@/access/roles'
+import { internalOnly, isPublisherRole, isSocialRole } from '@/access/roles'
 
 export const SocialPosts: CollectionConfig = {
   slug: 'social-posts',
   access: {
-    create: ({ req: { user } }) => isEditorialRole(user),
+    create: ({ req: { user } }) => isSocialRole(user),
     delete: ({ req: { user } }) => isPublisherRole(user),
     read: internalOnly,
-    update: ({ req: { user } }) => isEditorialRole(user) || isPublisherRole(user),
+    update: ({ req: { user } }) => isSocialRole(user),
   },
   admin: {
-    defaultColumns: ['title', 'approvalStatus', 'scheduledFor'],
+    defaultColumns: ['title', 'sourcePerson', 'approvalStatus', 'scheduledFor', 'publishedAt'],
     useAsTitle: 'title',
   },
   fields: [
@@ -40,6 +40,8 @@ export const SocialPosts: CollectionConfig = {
           options: [
             { label: 'LinkedIn', value: 'linkedin' },
             { label: 'X', value: 'x' },
+            { label: 'Facebook', value: 'facebook' },
+            { label: 'Instagram', value: 'instagram' },
           ],
           required: true,
         },
@@ -72,4 +74,71 @@ export const SocialPosts: CollectionConfig = {
     { name: 'errorLog', type: 'textarea' },
     { name: 'analyticsSnapshot', type: 'json' },
   ],
+  hooks: {
+    beforeChange: [
+      ({ data, originalDoc, req }) => {
+        const previousStatus = originalDoc?.approvalStatus
+        const nextStatus = data.approvalStatus ?? previousStatus
+        const requiresPublisherApproval = ['approved', 'scheduled', 'published'].includes(nextStatus)
+
+        if (
+          requiresPublisherApproval &&
+          nextStatus !== previousStatus &&
+          !isPublisherRole(req.user)
+        ) {
+          throw new Error('Publisher / Admin approval is required to approve or publish social posts.')
+        }
+
+        if (nextStatus === 'published' && !data.publishedAt && !originalDoc?.publishedAt) {
+          return { ...data, publishedAt: new Date().toISOString() }
+        }
+
+        return data
+      },
+    ],
+    afterChange: [
+      async ({ doc, previousDoc, req }) => {
+        if (
+          doc.approvalStatus !== 'published' ||
+          previousDoc?.approvalStatus === 'published' ||
+          previousDoc?.publishedAt
+        ) {
+          return doc
+        }
+
+        const sourcePersonId =
+          typeof doc.sourcePerson === 'object' ? doc.sourcePerson?.id : doc.sourcePerson
+
+        if (!sourcePersonId) {
+          return doc
+        }
+
+        try {
+          const person = await req.payload.findByID({
+            id: sourcePersonId,
+            collection: 'people',
+            depth: 0,
+            overrideAccess: true,
+          })
+
+          await req.payload.update({
+            id: sourcePersonId,
+            collection: 'people',
+            data: {
+              socialLastPublishedAt: doc.publishedAt,
+              socialPublishedCount: Number(person.socialPublishedCount || 0) + 1,
+            },
+            overrideAccess: true,
+          })
+        } catch (error) {
+          req.payload.logger.error({
+            err: error,
+            message: `Unable to update social promotion counters for person ${sourcePersonId}`,
+          })
+        }
+
+        return doc
+      },
+    ],
+  },
 }

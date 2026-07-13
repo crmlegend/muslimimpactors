@@ -1305,6 +1305,44 @@ h1 {
   font-weight: 850;
 }
 
+.portrait-region-control {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.portrait-region-control label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.portrait-region-control select {
+  width: min(100%, 250px);
+  min-height: 38px;
+  padding: 0 34px 0 12px;
+  border: 1px solid rgba(13, 118, 188, 0.28);
+  border-radius: 0;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.92);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.portrait-region-empty {
+  display: grid;
+  min-height: 280px;
+  grid-column: 1 / -1;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+}
+
 .portrait-mosaic {
   display: grid;
   width: 100%;

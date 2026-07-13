@@ -38,6 +38,12 @@ export const isEditorialRole = (user: unknown) => {
 
 export const isEditorial: Access = ({ req: { user } }) => isEditorialRole(user)
 
+export const isSocialRole = (user: unknown) => {
+  const role = getRole(user)
+
+  return role === 'social_manager' || role === 'publisher_admin' || role === 'super_admin'
+}
+
 export const isRightsRole = (user: unknown) => {
   const role = getRole(user)
 

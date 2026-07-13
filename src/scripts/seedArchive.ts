@@ -727,12 +727,17 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
       data: {
         archiveTrack:
           person.theme === 'muslims_in_history' ? 'golden_age_history' : 'american_civic_impact',
+        countryCode: person.countryCode,
+        displayPriority: person.displayPriority,
+        displayRegion: person.displayRegion,
         editorApproved: Boolean(profileUpdate),
         eraLabel: person.era,
         externalVideoNote: video?.note || noApprovedVideoNote,
         externalVideoSource: video?.source || null,
         externalVideoUrl: video?.embedId ? `https://www.youtube.com/watch?v=${video.embedId}` : null,
         fullBio: profileUpdate ? richText(profileUpdate.fullBio.join('\n\n')) : undefined,
+        homepageDisplayEnabled: person.homepageDisplayEnabled,
+        hoverBannerText: person.hoverBannerText,
         nationality: person.region,
         name: person.name,
         personType: profileUpdate?.personType || personTypeFor(person.role),
@@ -747,6 +752,9 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
         },
         shortBio: `${person.summary} ${detailSections[0]?.body || ''}`,
         slug: person.slug,
+        socialDisplayPriority: person.displayPriority,
+        socialPostFrequencyDays: 30,
+        socialPromotionEnabled: person.theme === 'american_muslims',
         sources: [
           sourceIds.get(`Wikipedia: ${person.name}`),
           sourceIds.get('Open encyclopedia reference'),
@@ -1266,6 +1274,26 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
       platform: 'x',
       tokenReference: 'not-connected-demo-x',
     },
+    {
+      active: false,
+      connectedBy: userIds.get('publisher_admin'),
+      connectedEntityType: 'organization',
+      displayName: 'Muslim Impactors - Facebook Seed',
+      externalAccountId: 'demo-facebook-page',
+      notes: 'Demo account only. Meta OAuth connection is intentionally not active.',
+      platform: 'facebook',
+      tokenReference: 'not-connected-demo-facebook',
+    },
+    {
+      active: false,
+      connectedBy: userIds.get('publisher_admin'),
+      connectedEntityType: 'organization',
+      displayName: 'Muslim Impactors - Instagram Seed',
+      externalAccountId: 'demo-instagram-page',
+      notes: 'Demo account only. Meta OAuth connection is intentionally not active.',
+      platform: 'instagram',
+      tokenReference: 'not-connected-demo-instagram',
+    },
   ]
 
   const socialAccountIds: Array<number | string> = []
@@ -1317,6 +1345,18 @@ export const seedArchive = async (options: { includeMedia?: boolean } = {}) => {
             link: publicSiteUrl,
             platform: 'x',
             postText: `${post.title}. Seed draft, not connected to live publishing.`,
+          },
+          {
+            hashtags: '#AmericanMuslims #DigitalArchive',
+            link: publicSiteUrl,
+            platform: 'facebook',
+            postText: `${post.title}. Seed Facebook draft for approval workflow testing.`,
+          },
+          {
+            hashtags: '#AmericanMuslims #MuslimImpactors',
+            link: publicSiteUrl,
+            platform: 'instagram',
+            postText: `${post.title}. Seed Instagram draft for approval workflow testing.`,
           },
         ],
         remotePostIds: {},

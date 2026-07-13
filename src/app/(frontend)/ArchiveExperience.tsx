@@ -15,6 +15,8 @@ import {
   popularPersonalities,
   sponsorRows,
   storyRows,
+  type DisplayRegion,
+  type Personality,
   type SponsorRow,
 } from './archiveData'
 import { logVisitorEvent } from './visitorEvents'
@@ -42,6 +44,7 @@ type ArchiveExperienceSettings = {
   featuredPersonalitySource?: 'daily' | 'manual'
   featuredPersonalitySlug?: string
   goldenAgeHighlightSlugs?: string[]
+  personalities?: Personality[]
   recommendedStorySlugs?: string[]
   sponsorLabels?: Record<string, string>
   sponsorSlugs?: string[]
@@ -67,35 +70,118 @@ const uniqueBySlug = <T extends { slug: string }>(items: T[]) => {
 
 const isDefined = <T,>(value: T | null | undefined): value is T => Boolean(value)
 
-const professionalFeatureSlugs = new Set(popularPersonalities.map((person) => person.slug))
+type RegionSelection = 'default' | Exclude<DisplayRegion, 'global'>
+
+const regionOptions: { label: string; value: RegionSelection }[] = [
+  { label: 'US / North America', value: 'default' },
+  { label: 'United States', value: 'us' },
+  { label: 'North America', value: 'na' },
+  { label: 'United Kingdom', value: 'uk' },
+  { label: 'Europe', value: 'eu' },
+]
+
+const isRegionSelection = (value: string | null): value is RegionSelection =>
+  regionOptions.some((option) => option.value === value)
+
+const matchesRegion = (person: Personality, selection: RegionSelection) => {
+  if (person.displayRegion === 'global') {
+    return true
+  }
+
+  if (selection === 'default') {
+    return person.displayRegion === 'us' || person.displayRegion === 'na'
+  }
+
+  if (selection === 'na') {
+    return person.displayRegion === 'us' || person.displayRegion === 'na'
+  }
+
+  if (selection === 'eu') {
+    return person.displayRegion === 'uk' || person.displayRegion === 'eu'
+  }
+
+  return person.displayRegion === selection
+}
+
+const stableHash = (value: string) =>
+  Array.from(value).reduce((hash, character) => (hash * 31 + character.charCodeAt(0)) >>> 0, 0)
+
+const getRotationScore = (person: Personality, visitIndex: number) => {
+  const priority = Math.min(999, Math.max(1, person.displayPriority || 500))
+  const rotationOffset = stableHash(`${visitIndex}:${person.slug}`) % 1000
+
+  return priority * 2 + rotationOffset
+}
+
+const selectRotatingProfiles = (
+  people: Personality[],
+  selection: RegionSelection,
+  visitIndex: number,
+) => {
+  const eligiblePeople = people.filter(
+    (person) => person.homepageDisplayEnabled && matchesRegion(person, selection),
+  )
+  const priorityAnchors = [...eligiblePeople]
+    .sort(
+      (left, right) =>
+        left.displayPriority - right.displayPriority || left.name.localeCompare(right.name),
+    )
+    .slice(0, 6)
+  const recentAdditions = [...eligiblePeople]
+    .filter((person) => person.createdAt && Number.isFinite(Date.parse(person.createdAt)))
+    .sort((left, right) => Date.parse(right.createdAt || '') - Date.parse(left.createdAt || ''))
+    .slice(0, 6)
+  const guaranteedSlugs = new Set(
+    [...priorityAnchors, ...recentAdditions].map((person) => person.slug),
+  )
+  const rotationPool = eligiblePeople
+    .filter((person) => !guaranteedSlugs.has(person.slug))
+    .sort((left, right) => {
+      const scoreDifference =
+        getRotationScore(left, visitIndex) - getRotationScore(right, visitIndex)
+
+      return scoreDifference || left.name.localeCompare(right.name)
+    })
+
+  return uniqueBySlug([...priorityAnchors, ...recentAdditions, ...rotationPool]).slice(0, 24)
+}
 
 export default function ArchiveExperience({ settings }: ArchiveExperienceProps) {
   const [portraitImages, setPortraitImages] = useState<Record<string, string>>({})
+  const [regionSelection, setRegionSelection] = useState<RegionSelection>('default')
   const [selectedPersonSlug, setSelectedPersonSlug] = useState<string | null>(null)
-  const configuredFeaturedPersonality = popularPersonalities.find(
+  const [visitIndex, setVisitIndex] = useState(0)
+  const profileSource = settings?.personalities?.length ? settings.personalities : popularPersonalities
+  const configuredFeaturedPersonality = profileSource.find(
     (person) => person.slug === settings?.featuredPersonalitySlug,
   )
-  const shouldUseConfiguredFeatured = configuredFeaturedPersonality
-    ? professionalFeatureSlugs.has(configuredFeaturedPersonality.slug)
-    : false
+  const rotatingProfiles = useMemo(
+    () => selectRotatingProfiles(profileSource, regionSelection, visitIndex),
+    [profileSource, regionSelection, visitIndex],
+  )
   const activeFeaturedPersonality =
-    shouldUseConfiguredFeatured && configuredFeaturedPersonality
+    (configuredFeaturedPersonality && matchesRegion(configuredFeaturedPersonality, regionSelection)
       ? configuredFeaturedPersonality
-      : featuredPersonality
+      : rotatingProfiles.find((person) => person.slug === featuredPersonality.slug)) ||
+    rotatingProfiles[0] ||
+    profileSource[0] ||
+    featuredPersonality
   const portraitPeople = useMemo(
     () => {
-      const surroundingPeople = popularPersonalities.filter(
+      const surroundingPeople = rotatingProfiles.filter(
         (person) => person.slug !== activeFeaturedPersonality.slug,
       )
       const centerIndex = Math.min(10, Math.max(5, Math.floor(surroundingPeople.length / 2)))
 
       return uniqueBySlug([
         ...surroundingPeople.slice(0, centerIndex),
-        activeFeaturedPersonality,
+        ...(matchesRegion(activeFeaturedPersonality, regionSelection)
+          ? [activeFeaturedPersonality]
+          : []),
         ...surroundingPeople.slice(centerIndex),
       ]).slice(0, 24)
     },
-    [activeFeaturedPersonality],
+    [activeFeaturedPersonality, regionSelection, rotatingProfiles],
   )
   const goldenAgePeople = useMemo(
     () => {
@@ -130,7 +216,7 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
   )
   const configuredEditorChoicePeople =
     settings?.editorChoiceSlugs
-      ?.map((slug) => popularPersonalities.find((person) => person.slug === slug))
+      ?.map((slug) => profileSource.find((person) => person.slug === slug))
       .filter(isDefined) || []
   const editorChoicePeople = configuredEditorChoicePeople.length
     ? configuredEditorChoicePeople
@@ -171,12 +257,35 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
   }
   const editorChoiceImage = portraitImages[editorChoicePerson.slug] || editorChoicePerson.imageUrl
   const selectedPerson = selectedPersonSlug
-    ? popularPersonalities.find((person) => person.slug === selectedPersonSlug)
+    ? profileSource.find((person) => person.slug === selectedPersonSlug) ||
+      popularPersonalities.find((person) => person.slug === selectedPersonSlug)
     : null
   const selectedStory = selectedPerson ? getPersonalityStory(selectedPerson) : null
   const selectedVideo =
     selectedPerson && selectedStory ? getApprovedPersonalityVideo(selectedPerson, selectedStory) : null
   const selectedRelatedStories = selectedPerson ? getRelatedStoriesForPerson(selectedPerson) : []
+
+  useEffect(() => {
+    const visitStorageKey = 'muslim-impactors-homepage-visit'
+    const regionStorageKey = 'muslim-impactors-region'
+    const initializeVisitorState = window.setTimeout(() => {
+      const previousVisit = Number.parseInt(
+        window.localStorage.getItem(visitStorageKey) || '0',
+        10,
+      )
+      const nextVisit = Number.isFinite(previousVisit) ? previousVisit + 1 : 1
+      const storedRegion = window.localStorage.getItem(regionStorageKey)
+
+      window.localStorage.setItem(visitStorageKey, String(nextVisit))
+      setVisitIndex(nextVisit)
+
+      if (isRegionSelection(storedRegion)) {
+        setRegionSelection(storedRegion)
+      }
+    }, 0)
+
+    return () => window.clearTimeout(initializeVisitorState)
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -273,8 +382,32 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
           <section className="review-feature-panel webstories-home-stage">
             <div className="portrait-wall-panel">
               <h1 className="sr-only">Muslim Impactors civic and professional portrait archive</h1>
+              <div className="portrait-region-control">
+                <label htmlFor="homepage-region">Region</label>
+                <select
+                  id="homepage-region"
+                  onChange={(event) => {
+                    const nextRegion = event.target.value as RegionSelection
+
+                    setRegionSelection(nextRegion)
+                    window.localStorage.setItem('muslim-impactors-region', nextRegion)
+                    logVisitorEvent({
+                      eventType: 'other_task',
+                      metadata: { region: nextRegion },
+                      targetType: 'homepage_region_filter',
+                    })
+                  }}
+                  value={regionSelection}
+                >
+                  {regionOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="portrait-mosaic" aria-label="Personality portrait index">
-                {portraitPeople.map((person, index) => {
+                {portraitPeople.length ? portraitPeople.map((person, index) => {
                   const portraitImage = portraitImages[person.slug] || person.imageUrl
 
                   return (
@@ -315,13 +448,19 @@ export default function ArchiveExperience({ settings }: ArchiveExperienceProps) 
                         <em>{person.summary}</em>
                       </span>
                       <span className="portrait-hover-card" aria-hidden="true">
-                        <strong>{getPersonalityStory(person).story}</strong>
+                        <strong>
+                          {person.hoverBannerText || getPersonalityStory(person).story}
+                        </strong>
                         <span>{person.name}</span>
                         <small>{person.role}</small>
                       </span>
                     </button>
                   )
-                })}
+                }) : (
+                  <p className="portrait-region-empty">
+                    No published profiles are assigned to this region yet.
+                  </p>
+                )}
               </div>
               <p className="portrait-wall-caption">
                 Hover over a portrait for a record preview. Click any portrait to open the story

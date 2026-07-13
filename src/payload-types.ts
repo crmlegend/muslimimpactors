@@ -475,6 +475,46 @@ export interface Person {
    * Controls homepage rails, public filters, and editorial separation between modern civic profiles, Golden Age figures, global modern figures, and contributors.
    */
   archiveTrack: 'american_civic_impact' | 'golden_age_history' | 'global_modern_impact' | 'contributor' | 'other';
+  /**
+   * Allow this published profile to appear in the rotating landing-page portrait grid.
+   */
+  homepageDisplayEnabled?: boolean | null;
+  /**
+   * Landing-page priority from 001 (highest) to 999 (lowest). Similar priorities rotate between visits.
+   */
+  displayPriority: number;
+  /**
+   * Audience region used by the landing-page filter. US profiles also match NA; UK profiles also match EU.
+   */
+  displayRegion: 'us' | 'na' | 'uk' | 'eu' | 'global';
+  /**
+   * Optional ISO two-letter country code for editorial use, for example US, CA, or GB.
+   */
+  countryCode?: string | null;
+  /**
+   * Admin-managed wording displayed in the information banner when a visitor hovers over this profile photo.
+   */
+  hoverBannerText?: string | null;
+  /**
+   * Allow this profile to enter the social-manager promotion queue.
+   */
+  socialPromotionEnabled?: boolean | null;
+  /**
+   * Minimum number of days between published social promotions.
+   */
+  socialPostFrequencyDays: number;
+  /**
+   * Social queue priority from 001 (highest) to 999 (lowest).
+   */
+  socialDisplayPriority: number;
+  /**
+   * Automatically updated when a related social post is marked Published.
+   */
+  socialLastPublishedAt?: string | null;
+  /**
+   * Automatically maintained count of published social promotions.
+   */
+  socialPublishedCount?: number | null;
   aliases?:
     | {
         alias: string;
@@ -1756,7 +1796,7 @@ export interface AiJob {
  */
 export interface SocialAccount {
   id: number;
-  platform: 'linkedin' | 'x';
+  platform: 'linkedin' | 'x' | 'facebook' | 'instagram';
   displayName: string;
   connectedEntityType: 'company_page' | 'organization' | 'individual_account';
   externalAccountId?: string | null;
@@ -1784,7 +1824,7 @@ export interface SocialPost {
   sourcePerson?: (number | null) | Person;
   platformVariants?:
     | {
-        platform: 'linkedin' | 'x';
+        platform: 'linkedin' | 'x' | 'facebook' | 'instagram';
         postText: string;
         media?: (number | Media)[] | null;
         link?: string | null;
@@ -2308,6 +2348,16 @@ export interface PeopleSelect<T extends boolean = true> {
   displayTitle?: T;
   personType?: T;
   archiveTrack?: T;
+  homepageDisplayEnabled?: T;
+  displayPriority?: T;
+  displayRegion?: T;
+  countryCode?: T;
+  hoverBannerText?: T;
+  socialPromotionEnabled?: T;
+  socialPostFrequencyDays?: T;
+  socialDisplayPriority?: T;
+  socialLastPublishedAt?: T;
+  socialPublishedCount?: T;
   aliases?:
     | T
     | {

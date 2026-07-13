@@ -24,7 +24,13 @@ export const People: CollectionConfig = {
     update: internalOnly,
   },
   admin: {
-    defaultColumns: ['name', 'archiveTrack', 'personType', 'workflowStatus'],
+    defaultColumns: [
+      'name',
+      'displayPriority',
+      'displayRegion',
+      'archiveTrack',
+      'workflowStatus',
+    ],
     description:
       'Create public personality dossiers for American Muslims, historical Muslim figures, contributors, and reviewers. Use the Preview button before publishing.',
     preview: previewBySlug('/personalities'),
@@ -91,6 +97,127 @@ export const People: CollectionConfig = {
         description:
           'Controls homepage rails, public filters, and editorial separation between modern civic profiles, Golden Age figures, global modern figures, and contributors.',
       },
+    },
+    {
+      type: 'collapsible',
+      label: 'Homepage display',
+      admin: { initCollapsed: false },
+      fields: [
+        {
+          name: 'homepageDisplayEnabled',
+          type: 'checkbox',
+          defaultValue: false,
+          admin: {
+            description:
+              'Allow this published profile to appear in the rotating landing-page portrait grid.',
+          },
+        },
+        {
+          name: 'displayPriority',
+          type: 'number',
+          defaultValue: 500,
+          min: 1,
+          max: 999,
+          required: true,
+          admin: {
+            description:
+              'Landing-page priority from 001 (highest) to 999 (lowest). Similar priorities rotate between visits.',
+            step: 1,
+          },
+        },
+        {
+          name: 'displayRegion',
+          type: 'select',
+          defaultValue: 'global',
+          options: [
+            { label: 'US - United States', value: 'us' },
+            { label: 'NA - North America (US and Canada)', value: 'na' },
+            { label: 'UK - United Kingdom', value: 'uk' },
+            { label: 'EU - Europe (including UK)', value: 'eu' },
+            { label: 'Global / all regions', value: 'global' },
+          ],
+          required: true,
+          admin: {
+            description:
+              'Audience region used by the landing-page filter. US profiles also match NA; UK profiles also match EU.',
+          },
+        },
+        {
+          name: 'countryCode',
+          type: 'text',
+          maxLength: 2,
+          admin: {
+            description:
+              'Optional ISO two-letter country code for editorial use, for example US, CA, or GB.',
+          },
+        },
+        {
+          name: 'hoverBannerText',
+          type: 'textarea',
+          maxLength: 240,
+          admin: {
+            description:
+              'Admin-managed wording displayed in the information banner when a visitor hovers over this profile photo.',
+          },
+        },
+      ],
+    },
+    {
+      type: 'collapsible',
+      label: 'Social promotion controls',
+      admin: { initCollapsed: true },
+      fields: [
+        {
+          name: 'socialPromotionEnabled',
+          type: 'checkbox',
+          defaultValue: false,
+          admin: {
+            description: 'Allow this profile to enter the social-manager promotion queue.',
+          },
+        },
+        {
+          name: 'socialPostFrequencyDays',
+          type: 'number',
+          defaultValue: 30,
+          min: 1,
+          max: 365,
+          required: true,
+          admin: {
+            description: 'Minimum number of days between published social promotions.',
+            step: 1,
+          },
+        },
+        {
+          name: 'socialDisplayPriority',
+          type: 'number',
+          defaultValue: 500,
+          min: 1,
+          max: 999,
+          required: true,
+          admin: {
+            description: 'Social queue priority from 001 (highest) to 999 (lowest).',
+            step: 1,
+          },
+        },
+        {
+          name: 'socialLastPublishedAt',
+          type: 'date',
+          admin: {
+            description: 'Automatically updated when a related social post is marked Published.',
+            readOnly: true,
+          },
+        },
+        {
+          name: 'socialPublishedCount',
+          type: 'number',
+          defaultValue: 0,
+          min: 0,
+          admin: {
+            description: 'Automatically maintained count of published social promotions.',
+            readOnly: true,
+          },
+        },
+      ],
     },
     {
       name: 'aliases',
@@ -228,6 +355,10 @@ export const People: CollectionConfig = {
   hooks: {
     beforeChange: [
       ({ data, originalDoc, req }) => {
+        if (typeof data.countryCode === 'string') {
+          data.countryCode = data.countryCode.trim().toUpperCase() || null
+        }
+
         validatePublishGate({ data, originalDoc, req, requireRightsClearance: false })
         return data
       },

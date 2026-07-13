@@ -1,6 +1,6 @@
 # Muslim Impactors Project Reference
 
-Last updated: 2026-05-31
+Last updated: 2026-07-13
 
 This document is the technical and editorial reference for Muslim Impactors. It explains what was built, how the public website and CMS connect, why the main database fields exist, how the content workflow works, and what a future developer must know before changing the system.
 
@@ -443,6 +443,25 @@ Why these fields exist:
 People classification field:
 
 - `archiveTrack`: Explicitly differentiates `american_civic_impact`, `golden_age_history`, `global_modern_impact`, `contributor`, and `other`. This makes Golden Age vs current American/civic profiles clear in admin and public filtering.
+- `homepageDisplayEnabled`: Explicit admin switch controlling whether a published modern profile can appear in the landing-page portrait rotation.
+- `displayPriority`: Numeric homepage priority from `001` (highest) to `999` (lowest). Profiles with similar priority rotate between visits instead of producing a permanently static grid.
+- `displayRegion`: Landing-page audience region: `us`, `na`, `uk`, `eu`, or `global`.
+- `countryCode`: Optional ISO two-letter country code such as `US`, `CA`, or `GB` for editorial filtering and future country-level views.
+- `hoverBannerText`: Admin-maintained wording shown in the portrait hover information banner. Public cards use this field first and only use legacy story wording as a fallback.
+- `socialPromotionEnabled`: Indicates whether the profile can enter the social-manager promotion queue.
+- `socialPostFrequencyDays`: Minimum intended number of days between promotions for this profile.
+- `socialDisplayPriority`: Social queue priority from `001` (highest) to `999` (lowest).
+- `socialLastPublishedAt`: Automatically updated from a related Social Post when its status first changes to `published`.
+- `socialPublishedCount`: Automatically incremented when a related Social Post changes to `published`.
+
+Admin workflow for a new landing-page profile:
+
+1. Create the person and upload/select an approved portrait in `Public Personalities`.
+2. Set `archiveTrack` to `american_civic_impact` or `global_modern_impact`.
+3. Enable `homepageDisplayEnabled`.
+4. Assign `displayPriority`, `displayRegion`, and optional `countryCode`.
+5. Write the profile-specific `hoverBannerText`.
+6. Complete the existing approval workflow and publish the profile.
 
 ### Stories
 
@@ -614,6 +633,7 @@ Key fields:
 - label/platform/account metadata
 - ownership/connected user
 - status and permissions.
+- supported platforms: LinkedIn, X, Facebook, and Instagram.
 
 Why these fields exist:
 
@@ -631,10 +651,28 @@ Key fields:
 - post copy/media
 - related content
 - status and publish metadata.
+- `sourcePerson`: Connects the social item to the promoted profile for frequency and audit reporting.
+- platform variants for LinkedIn, X, Facebook, and Instagram.
+- `scheduledFor`, `publishedAt`, `remotePostIds`, `errorLog`, and `analyticsSnapshot` for operational audit.
 
 Why these fields exist:
 
 - Editorial team can prepare social posts from archive content with approval tracking.
+
+Current social operating model:
+
+1. The Social Manager creates a Social Post, connects it to `sourcePerson`, writes the platform variants, and moves it to `in_review`.
+2. A Publisher / Admin approves, schedules, or marks the post published. Social Managers cannot self-approve a post into `approved`, `scheduled`, or `published` status.
+3. Marking the post `published` automatically sets `publishedAt`, updates the person's `socialLastPublishedAt`, and increments `socialPublishedCount`.
+4. Native platform URLs/IDs belong in `remotePostIds`; performance snapshots belong in `analyticsSnapshot`.
+
+Recommended automation path:
+
+- Use the manual approval workflow above first. It supports a dedicated social-media person immediately and keeps every publish action reviewable.
+- Add direct publishing only after the organization has approved accounts and API access for Meta Graph API (Facebook/Instagram), LinkedIn, and X.
+- Run approved scheduled posts through a separate Railway worker or scheduled job. Store OAuth credentials in Railway secrets; `tokenReference` stores only the secret reference name, never the token itself.
+- The worker should publish only `approved` or `scheduled` posts, record platform response IDs/errors, and then move the record to `published` or `failed`.
+- Keep publisher approval mandatory even after automation. AI may draft and adapt copy, but it should not publish autonomously.
 
 ### Audit Logs
 
@@ -804,6 +842,19 @@ Expected controls:
 - Left/right rail headings and optional body text.
 - Brand colors.
 - Safe AI design request notes.
+- Per-profile landing-page enable switch, region, country code, priority, and hover-banner wording in `Public Personalities`.
+
+Portrait rotation and region behavior:
+
+- The homepage now reads published modern profiles from Payload instead of relying only on the static seed list.
+- The region selector offers United States, North America, United Kingdom, and Europe. The default `US / North America` view includes `us`, `na`, and `global` profiles.
+- A profile tagged `us` also matches North America. A profile tagged `uk` also matches Europe. `global` profiles match every selection.
+- Each browser visit increments a local visit counter. The counter changes the deterministic rotation among similarly prioritized profiles, so repeated visits do not preserve the same card order.
+- Priority remains meaningful: `001` is strongest and `999` is weakest. The six highest-priority eligible profiles are guaranteed positions on every visit.
+- Up to six newest eligible records are also guaranteed positions so recent additions are not hidden behind older records.
+- The remaining portrait positions come from a visit-specific weighted rotation pool. Display priority influences the pool score, but the visit counter changes which additional profiles are surfaced.
+- The grid displays at most 24 eligible profiles. An explicitly configured featured profile is retained only when it matches the selected region.
+- A visitor's region selection is stored locally in that browser. Without a saved selection, the homepage defaults to `US / North America`.
 
 Expected homepage copy:
 
@@ -962,11 +1013,12 @@ Mobile:
 These items were open at the time this document was created:
 
 1. Add source-link-backed verified sponsor claims, richer CTA blocks, and internal research notes beyond the current gratitude/focus/highlight/recognition CMS fields.
-2. Continue CMS-to-frontend cutover beyond People into Stories, Articles, search, and homepage data.
+2. Continue CMS-to-frontend cutover beyond People and the homepage portrait grid into Stories, Articles, and search.
 3. Verify `Homepage & Branding` loads and saves for non-technical admin users after each Payload schema/admin change.
 4. Continue adding verified person-specific videos per personality/story. The system now shows placeholders where no approved video exists and avoids generic fallback embeds.
 5. Expand visitor-event coverage where new public tasks are added.
 6. Keep `PAYLOAD_POSTGRES_PUSH=false` and use migrations for production schema changes.
+7. Direct social publishing remains intentionally disconnected until production Meta, LinkedIn, and X API credentials and account-review requirements are available. The manual approval and audit workflow is ready now.
 
 ## 20. Developer Notes
 

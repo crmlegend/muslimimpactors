@@ -11,6 +11,7 @@ import {
   storyRows,
   slugify,
   type ArchiveTrack,
+  type DisplayRegion,
   type Personality,
   type SponsorRow,
   type StoryRow,
@@ -148,6 +149,12 @@ const mapCMSPersonality = (person: Person, index: number): Personality => {
   return {
     archiveTrack,
     category,
+    countryCode: nonEmptyText(person.countryCode) || staticMatch?.countryCode,
+    createdAt: person.createdAt || staticMatch?.createdAt,
+    displayPriority: person.displayPriority || staticMatch?.displayPriority || 500,
+    displayRegion: (person.displayRegion ||
+      staticMatch?.displayRegion ||
+      (archiveTrack === 'american_civic_impact' ? 'us' : 'global')) as DisplayRegion,
     editorsPick: staticMatch?.editorsPick || false,
     era: person.eraLabel || person.birthDateText || staticMatch?.era || 'Current',
     externalVideoNote: cmsVideoIsStale
@@ -157,6 +164,12 @@ const mapCMSPersonality = (person: Person, index: number): Personality => {
       ? staticMatch?.externalVideoSource
       : person.externalVideoSource || staticMatch?.externalVideoSource,
     fullBio: richTextToPlainText(person.fullBio) || staticMatch?.fullBio,
+    homepageDisplayEnabled:
+      person.homepageDisplayEnabled ??
+      staticMatch?.homepageDisplayEnabled ??
+      archiveTrack === 'american_civic_impact',
+    hoverBannerText:
+      nonEmptyText(person.hoverBannerText) || staticMatch?.hoverBannerText || person.shortBio,
     href: `/personalities/${person.slug}`,
     imageUrl: mediaURL(person.portrait) || staticMatch?.imageUrl,
     initials: initialsFor(person.name),

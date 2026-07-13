@@ -15,11 +15,17 @@ export type SearchItem = {
 export type Personality = {
   archiveTrack: ArchiveTrack
   category: string
+  countryCode?: string
+  createdAt?: string
+  displayPriority: number
+  displayRegion: DisplayRegion
   editorsPick: boolean
   era: string
   externalVideoNote?: string
   externalVideoSource?: string
   fullBio?: string
+  homepageDisplayEnabled: boolean
+  hoverBannerText?: string
   href: string
   imageUrl?: string
   initials: string
@@ -35,6 +41,8 @@ export type Personality = {
   wikipediaTitle: string
   youtubeEmbedId?: string
 }
+
+export type DisplayRegion = 'us' | 'na' | 'uk' | 'eu' | 'global'
 
 export type ArchiveTrack =
   | 'american_civic_impact'
@@ -560,11 +568,16 @@ const buildPersonalityList = ({
   return {
     archiveTrack: theme === 'muslims_in_history' ? 'golden_age_history' : 'american_civic_impact',
     category,
+    countryCode: theme === 'american_muslims' ? 'US' : undefined,
+    displayPriority: Math.min(999, 100 + index * 5),
+    displayRegion: theme === 'american_muslims' ? 'us' : 'global',
     editorsPick: editorPickNames.has(name),
     era,
     externalVideoNote: video?.note || (profileUpdate ? noApprovedVideoNote : undefined),
     externalVideoSource: video?.source,
     fullBio: getAmericanCivicProfileFullBio(slug),
+    homepageDisplayEnabled: theme === 'american_muslims',
+    hoverBannerText: summary,
     href: `/personalities/${slugify(name)}`,
     imageUrl: portraitImageOverrides[name],
     initials: initialsFor(name),
