@@ -36,12 +36,6 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
     WHERE "archive_track" = 'american_civic_impact';
 
     UPDATE "people"
-    SET
-      "homepage_display_enabled" = true,
-      "display_region" = 'global'::"public"."enum_people_display_region"
-    WHERE "archive_track" = 'global_modern_impact';
-
-    UPDATE "people"
     SET "hover_banner_text" = LEFT("short_bio", 240)
     WHERE "hover_banner_text" IS NULL AND "short_bio" IS NOT NULL;
 

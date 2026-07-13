@@ -847,6 +847,7 @@ Expected controls:
 Portrait rotation and region behavior:
 
 - The homepage now reads published modern profiles from Payload instead of relying only on the static seed list.
+- Existing American civic records are enabled and assigned to `US` during migration. Existing `global_modern_impact` records remain disabled until an admin reviews the record, assigns its intended region/country, and explicitly enables homepage display.
 - The region selector offers United States, North America, United Kingdom, and Europe. The default `US / North America` view includes `us`, `na`, and `global` profiles.
 - A profile tagged `us` also matches North America. A profile tagged `uk` also matches Europe. `global` profiles match every selection.
 - Each browser visit increments a local visit counter. The counter changes the deterministic rotation among similarly prioritized profiles, so repeated visits do not preserve the same card order.

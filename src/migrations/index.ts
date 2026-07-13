@@ -4,6 +4,7 @@ import * as migration_20260530_142700_create_site_settings_global from './202605
 import * as migration_20260530_153000_curate_american_civic_profiles from './20260530_153000_curate_american_civic_profiles';
 import * as migration_20260531_200000_add_sponsor_showcase_fields from './20260531_200000_add_sponsor_showcase_fields';
 import * as migration_20260713_120000_add_profile_rotation_and_social_controls from './20260713_120000_add_profile_rotation_and_social_controls';
+import * as migration_20260713_130000_disable_unreviewed_global_homepage_profiles from './20260713_130000_disable_unreviewed_global_homepage_profiles';
 
 export const migrations = [
   {
@@ -35,5 +36,10 @@ export const migrations = [
     up: migration_20260713_120000_add_profile_rotation_and_social_controls.up,
     down: migration_20260713_120000_add_profile_rotation_and_social_controls.down,
     name: '20260713_120000_add_profile_rotation_and_social_controls'
+  },
+  {
+    up: migration_20260713_130000_disable_unreviewed_global_homepage_profiles.up,
+    down: migration_20260713_130000_disable_unreviewed_global_homepage_profiles.down,
+    name: '20260713_130000_disable_unreviewed_global_homepage_profiles'
   },
 ];
