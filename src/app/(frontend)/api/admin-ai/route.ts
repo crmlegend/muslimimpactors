@@ -5,6 +5,7 @@ import { NextRequest } from 'next/server'
 import { isSuperAdminRole } from '@/access/roles'
 
 type CommandMode = 'execute' | 'preview'
+type DisplayRegion = 'eu' | 'global' | 'na' | 'uk' | 'us'
 
 type CommandResult = {
   canExecute: boolean
@@ -30,6 +31,14 @@ const archiveTracks = {
   other: 'other',
 } as const
 
+const displayRegionPatterns: { pattern: RegExp; value: DisplayRegion }[] = [
+  { pattern: /\bnorth america\b|\bna\b/i, value: 'na' },
+  { pattern: /\bunited kingdom\b|\buk\b/i, value: 'uk' },
+  { pattern: /\beurope\b|\beu\b/i, value: 'eu' },
+  { pattern: /\bunited states\b|\bu\.s\.\b|\bus\b/i, value: 'us' },
+  { pattern: /\bglobal\b|\ball regions\b/i, value: 'global' },
+]
+
 const sourceTypesByUrl = [
   { pattern: /youtu\.?be|youtube\.com/i, sourceType: 'online_video' },
   { pattern: /\.pdf(?:$|[?#])/i, sourceType: 'document_scan' },
@@ -42,7 +51,11 @@ const slugify = (value: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
 
-const normalizeName = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+const normalizeName = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
 
 const sponsorSlugCandidates = (name: string) =>
   Array.from(
@@ -64,6 +77,51 @@ const getArchiveTrack = (prompt: string) => {
   const match = Object.entries(archiveTracks).find(([label]) => normalized.includes(label))
 
   return match?.[1]
+}
+
+const getDisplayRegion = (prompt: string) => {
+  const match = prompt.match(/(?:display\s+)?region\s*(?:to|=|:)?\s*([^\n.,;]+)/i)
+  const value = match?.[1]
+
+  if (!value) {
+    return undefined
+  }
+
+  return displayRegionPatterns.find((entry) => entry.pattern.test(value))?.value
+}
+
+const getCountryCode = (prompt: string) =>
+  prompt.match(/\bcountry(?:\s+code)?\s*(?:to|=|:)\s*([a-z]{2})\b/i)?.[1]?.toUpperCase()
+
+const getDisplayPriority = (prompt: string) => {
+  const value = prompt.match(/\b(?:homepage|display)\s+priority\s*(?:to|=|:)?\s*(\d{1,3})\b/i)?.[1]
+
+  return value ? Number(value) : undefined
+}
+
+const getHomepageDisplayEnabled = (prompt: string) => {
+  if (!/\b(?:homepage|landing page)\b/i.test(prompt)) {
+    return undefined
+  }
+
+  if (/\b(?:disable|hide|remove|exclude)\b/i.test(prompt)) {
+    return false
+  }
+
+  if (/\b(?:enable|show|include|add)\b/i.test(prompt)) {
+    return true
+  }
+
+  return undefined
+}
+
+const getHoverBannerText = (prompt: string) => {
+  const quoted = prompt.match(
+    /(?:hover|info)\s+banner(?:\s+text)?(?:\s+for\s+.+?)?\s+(?:to|=)\s*["“]([^"”]+)["”]/i,
+  )?.[1]
+  const labeled = prompt.match(/(?:hover|info)\s+banner(?:\s+text)?\s*:\s*([^\n]+)/i)?.[1]
+
+  return (quoted || labeled)?.trim()
 }
 
 const getUrls = (prompt: string) =>
@@ -144,7 +202,9 @@ const findPeopleInPrompt = async ({
     user,
   })
   const normalizedPrompt = normalizeName(prompt)
-  const explicitTerms = [...listTermsAfterLabel(prompt, 'name'), ...quotedTerms(prompt)].map(normalizeName)
+  const explicitTerms = [...listTermsAfterLabel(prompt, 'name'), ...quotedTerms(prompt)].map(
+    normalizeName,
+  )
   const updatesAllPeople =
     /\ball\s+(public\s+)?personalit/i.test(prompt) || /\ball\s+people\b/i.test(prompt)
 
@@ -185,7 +245,8 @@ const createAuditJob = async ({
       promptSummary: prompt,
       provider: 'Admin AI Command Center',
       status:
-        mode === 'execute' && result.operations.some((operation) => operation.status === 'completed')
+        mode === 'execute' &&
+        result.operations.some((operation) => operation.status === 'completed')
           ? 'approved'
           : 'needs_review',
     },
@@ -239,6 +300,61 @@ export const POST = async (request: NextRequest) => {
         details: `${matchedPeople.map((person) => person.name).join(', ')} -> ${archiveTrack}`,
         status: mode === 'execute' ? 'completed' : 'preview',
         title: `Update archive track on ${matchedPeople.length} people record(s)`,
+      })
+    }
+  }
+
+  const displayRegion = getDisplayRegion(prompt)
+  const countryCode = getCountryCode(prompt)
+  const displayPriority = getDisplayPriority(prompt)
+  const homepageDisplayEnabled = getHomepageDisplayEnabled(prompt)
+  const hoverBannerText = getHoverBannerText(prompt)
+  const hasProfileDisplayCommand =
+    displayRegion !== undefined ||
+    countryCode !== undefined ||
+    displayPriority !== undefined ||
+    homepageDisplayEnabled !== undefined ||
+    hoverBannerText !== undefined
+
+  if (hasProfileDisplayCommand) {
+    const matchedPeople = await findPeopleInPrompt({ payload, prompt, user })
+    const invalidPriority =
+      displayPriority !== undefined && (displayPriority < 1 || displayPriority > 999)
+    const invalidBanner = hoverBannerText !== undefined && hoverBannerText.length > 240
+
+    if (!matchedPeople.length) {
+      warnings.push('No matching people records were found for the homepage display update.')
+    } else if (invalidPriority) {
+      warnings.push('Homepage display priority must be between 001 and 999.')
+    } else if (invalidBanner) {
+      warnings.push('Hover banner text must be 240 characters or fewer.')
+    } else {
+      const updates = {
+        ...(displayRegion !== undefined ? { displayRegion } : {}),
+        ...(countryCode !== undefined ? { countryCode } : {}),
+        ...(displayPriority !== undefined ? { displayPriority } : {}),
+        ...(homepageDisplayEnabled !== undefined ? { homepageDisplayEnabled } : {}),
+        ...(hoverBannerText !== undefined ? { hoverBannerText } : {}),
+      }
+
+      if (mode === 'execute') {
+        await Promise.all(
+          matchedPeople.map((person) =>
+            payload.update({
+              collection: 'people',
+              data: updates,
+              id: person.id,
+              overrideAccess: false,
+              user,
+            }),
+          ),
+        )
+      }
+
+      operations.push({
+        details: `${matchedPeople.map((person) => person.name).join(', ')} -> ${JSON.stringify(updates)}`,
+        status: mode === 'execute' ? 'completed' : 'preview',
+        title: `Update homepage display controls on ${matchedPeople.length} people record(s)`,
       })
     }
   }

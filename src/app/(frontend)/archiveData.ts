@@ -3,6 +3,7 @@ import {
   getAmericanCivicProfileUpdate,
   noApprovedVideoNote,
 } from '../../data/americanCivicProfiles'
+import { reviewedUSHomepageProfilesBySlug } from '../../data/homepageProfileCuration'
 
 export type SearchItem = {
   href: string
@@ -182,7 +183,8 @@ const portraitImageOverrides: Record<string, string> = {
     'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Huma_Abedin_%2852456232291%29_%28cropped%29.jpg/330px-Huma_Abedin_%2852456232291%29_%28cropped%29.jpg',
   'Ilhan Omar':
     'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Ilhan_Omar%2C_official_portrait%2C_116th_Congress_%28cropped%29_A.jpg/330px-Ilhan_Omar%2C_official_portrait%2C_116th_Congress_%28cropped%29_A.jpg',
-  'James Yee': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/James_Yee.JPG/330px-James_Yee.JPG',
+  'James Yee':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/James_Yee.JPG/330px-James_Yee.JPG',
   'Jawed Karim':
     'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Jawed_Karim_2008.jpg/330px-Jawed_Karim_2008.jpg',
   'Kareem Rashad Sultan Khan':
@@ -201,7 +203,8 @@ const portraitImageOverrides: Record<string, string> = {
     'https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Tlaib_Rashida_119th_Congress_%283x4_cropped%29.jpg/330px-Tlaib_Rashida_119th_Congress_%283x4_cropped%29.jpg',
   'Shahid Khan':
     'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Shahid_Khan_2015.jpg/330px-Shahid_Khan_2015.jpg',
-  'Talal Asad': 'https://upload.wikimedia.org/wikipedia/commons/8/88/Professor_Talal_Asad_01_%28cropped%29.jpg',
+  'Talal Asad':
+    'https://upload.wikimedia.org/wikipedia/commons/8/88/Professor_Talal_Asad_01_%28cropped%29.jpg',
   'Zahid Quraishi':
     'https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Judge_Zahid_Quraishi_%28cropped%29.png/330px-Judge_Zahid_Quraishi_%28cropped%29.png',
 }
@@ -560,39 +563,40 @@ const buildPersonalityList = ({
   theme: Personality['theme']
 }): Personality[] =>
   rows.map((row, index) => {
-  const [name, era, role, category, region, summary] = row.split('|')
-  const slug = slugify(name)
-  const profileUpdate = getAmericanCivicProfileUpdate(slug)
-  const video = profileUpdate?.video
+    const [name, era, role, category, region, summary] = row.split('|')
+    const slug = slugify(name)
+    const profileUpdate = getAmericanCivicProfileUpdate(slug)
+    const homepageCuration = reviewedUSHomepageProfilesBySlug.get(slug)
+    const video = profileUpdate?.video
 
-  return {
-    archiveTrack: theme === 'muslims_in_history' ? 'golden_age_history' : 'american_civic_impact',
-    category,
-    countryCode: theme === 'american_muslims' ? 'US' : undefined,
-    displayPriority: Math.min(999, 100 + index * 5),
-    displayRegion: theme === 'american_muslims' ? 'us' : 'global',
-    editorsPick: editorPickNames.has(name),
-    era,
-    externalVideoNote: video?.note || (profileUpdate ? noApprovedVideoNote : undefined),
-    externalVideoSource: video?.source,
-    fullBio: getAmericanCivicProfileFullBio(slug),
-    homepageDisplayEnabled: theme === 'american_muslims',
-    hoverBannerText: summary,
-    href: `/personalities/${slugify(name)}`,
-    imageUrl: portraitImageOverrides[name],
-    initials: initialsFor(name),
-    name,
-    popularity: startingPopularity - index * 5,
-    region,
-    role,
-    slug: slugify(name),
-    summary,
-    theme,
-    todayRelevance: todayRelevanceFor(name, theme),
-    tone: tones[index % tones.length],
-    wikipediaTitle: wikipediaTitleFor(name),
-    youtubeEmbedId: video?.youtubeEmbedId,
-  }
+    return {
+      archiveTrack: theme === 'muslims_in_history' ? 'golden_age_history' : 'american_civic_impact',
+      category,
+      countryCode: theme === 'american_muslims' ? 'US' : undefined,
+      displayPriority: homepageCuration?.priority || Math.min(999, 100 + index * 5),
+      displayRegion: theme === 'american_muslims' ? 'us' : 'global',
+      editorsPick: editorPickNames.has(name),
+      era,
+      externalVideoNote: video?.note || (profileUpdate ? noApprovedVideoNote : undefined),
+      externalVideoSource: video?.source,
+      fullBio: getAmericanCivicProfileFullBio(slug),
+      homepageDisplayEnabled: theme === 'american_muslims',
+      hoverBannerText: homepageCuration?.banner || summary,
+      href: `/personalities/${slugify(name)}`,
+      imageUrl: portraitImageOverrides[name],
+      initials: initialsFor(name),
+      name,
+      popularity: startingPopularity - index * 5,
+      region,
+      role,
+      slug: slugify(name),
+      summary,
+      theme,
+      todayRelevance: todayRelevanceFor(name, theme),
+      tone: tones[index % tones.length],
+      wikipediaTitle: wikipediaTitleFor(name),
+      youtubeEmbedId: video?.youtubeEmbedId,
+    }
   })
 
 export const americanMuslimPersonalities = buildPersonalityList({
@@ -609,7 +613,10 @@ export const historicalPersonalities = buildPersonalityList({
   theme: 'muslims_in_history',
 })
 
-export const personalities: Personality[] = [...americanMuslimPersonalities, ...historicalPersonalities]
+export const personalities: Personality[] = [
+  ...americanMuslimPersonalities,
+  ...historicalPersonalities,
+]
 
 export const getWikipediaUrl = (person: Pick<Personality, 'wikipediaTitle'>) =>
   `https://en.wikipedia.org/wiki/${person.wikipediaTitle}`
@@ -795,8 +802,7 @@ export const storyRows: StoryRow[] = [
     role: 'U.S. Army officer',
     slug: 'service-sacrifice-and-american-muslim-memory',
     story: 'Service, sacrifice, and American Muslim memory',
-    summary:
-      'A story path for military service, civic memory, and American Muslim sacrifice.',
+    summary: 'A story path for military service, civic memory, and American Muslim sacrifice.',
   },
   {
     body: 'This chapter shows how business, employment, philanthropy, and refugee support can be presented as public-service work in a research archive.',
@@ -819,8 +825,7 @@ export const storyRows: StoryRow[] = [
     role: 'Biochemist and Nobel laureate',
     slug: 'science-research-and-public-good',
     story: 'Science, research, and public good',
-    summary:
-      'A research-story model for science, higher education, and public knowledge.',
+    summary: 'A research-story model for science, higher education, and public knowledge.',
   },
   {
     body: 'This chapter explores art as a public archive: image, memory, migration, gender, institutions, and the responsibilities of credit and context.',
@@ -831,8 +836,7 @@ export const storyRows: StoryRow[] = [
     role: 'Visual artist and filmmaker',
     slug: 'art-memory-and-american-muslim-visibility',
     story: 'Art, memory, and American Muslim visibility',
-    summary:
-      'A visual-culture story for art, identity, migration, and museum context.',
+    summary: 'A visual-culture story for art, identity, migration, and museum context.',
   },
   {
     body: 'This story page combines a short documentary segment, an edited transcript passage, a related personality dossier, and source notes. It is written as an editorial model for chapter-based biography.',
@@ -1001,8 +1005,7 @@ export const youtubeVideos: YoutubeVideo[] = [
   {
     embedId: 'BpeZAm7rKHY',
     language: 'English',
-    note:
-      'English-language seed embed for the United States homepage focus and American Muslim history.',
+    note: 'English-language seed embed for the United States homepage focus and American Muslim history.',
     source: 'PBS / WETA / YouTube',
     title: 'American Muslims: A History Revealed',
     topic: 'American Muslims in the United States',
@@ -1010,8 +1013,7 @@ export const youtubeVideos: YoutubeVideo[] = [
   {
     embedId: 'tjPHL5f5JQs',
     language: 'English',
-    note:
-      'English-language seed embed for Muhammad Ali and public-memory story pages. Replace with approved/licensed media before launch.',
+    note: 'English-language seed embed for Muhammad Ali and public-memory story pages. Replace with approved/licensed media before launch.',
     source: 'Biography / YouTube',
     title: 'Muhammad Ali biography',
     topic: 'Muhammad Ali',
@@ -1019,8 +1021,7 @@ export const youtubeVideos: YoutubeVideo[] = [
   {
     embedId: '5dM9DRrgneA',
     language: 'English',
-    note:
-      'English-language seed embed for history, social theory, and Ibn Khaldun-related story pages.',
+    note: 'English-language seed embed for history, social theory, and Ibn Khaldun-related story pages.',
     source: 'Al Mayadeen English / YouTube',
     title: 'Figures in History: Ibn Khaldun',
     topic: 'Ibn Khaldun',
@@ -1028,8 +1029,7 @@ export const youtubeVideos: YoutubeVideo[] = [
   {
     embedId: '3bs1DkR5a0o',
     language: 'English',
-    note:
-      'English-language seed embed for astronomy, geography, instruments, and Al-Biruni-related pages.',
+    note: 'English-language seed embed for astronomy, geography, instruments, and Al-Biruni-related pages.',
     source: 'Al Jazeera English / YouTube',
     title: 'Science in a Golden Age: Astronomy',
     topic: 'Al-Biruni',
@@ -1037,8 +1037,7 @@ export const youtubeVideos: YoutubeVideo[] = [
   {
     embedId: 'K5XKjk0-hCo',
     language: 'English',
-    note:
-      'English-language seed embed for translation, libraries, Abbasid Baghdad, and knowledge culture.',
+    note: 'English-language seed embed for translation, libraries, Abbasid Baghdad, and knowledge culture.',
     source: 'Khan Academy / YouTube',
     title: 'The House of Wisdom, Baghdad',
     topic: 'House of Wisdom',
@@ -1086,8 +1085,7 @@ export const youtubeVideos: YoutubeVideo[] = [
   {
     embedId: 'jNQXAC9IVRw',
     language: 'English',
-    note:
-      'Verified platform-history video connected to Jawed Karim as a YouTube co-founder and the first public YouTube upload.',
+    note: 'Verified platform-history video connected to Jawed Karim as a YouTube co-founder and the first public YouTube upload.',
     source: 'YouTube / jawed',
     title: 'Me at the zoo',
     topic: 'Jawed Karim',
@@ -1363,9 +1361,8 @@ export const sponsorRows: SponsorRow[] = [
 
 export const getSponsorForRecord = (slug: string) =>
   sponsorRows[
-    Math.abs(
-      slug.split('').reduce((total, character) => total + character.charCodeAt(0), 0),
-    ) % sponsorRows.length
+    Math.abs(slug.split('').reduce((total, character) => total + character.charCodeAt(0), 0)) %
+      sponsorRows.length
   ]
 
 export const themes = [
@@ -1395,8 +1392,7 @@ export const themes = [
 
 export const timelineEvents = [
   {
-    body:
-      'Muhammad Ali becomes a central American Muslim public figure whose biography links sport, faith, anti-war conscience, humanitarian work, and global public memory.',
+    body: 'Muhammad Ali becomes a central American Muslim public figure whose biography links sport, faith, anti-war conscience, humanitarian work, and global public memory.',
     date: '1942-2016',
     href: '/personalities/muhammad-ali',
     people: ['Muhammad Ali'],
@@ -1405,8 +1401,7 @@ export const timelineEvents = [
     year: 1942,
   },
   {
-    body:
-      'Malcolm X anchors a research path for civil rights, human rights, self-education, public transformation, and American Muslim civic memory.',
+    body: 'Malcolm X anchors a research path for civil rights, human rights, self-education, public transformation, and American Muslim civic memory.',
     date: '1925-1965',
     href: '/personalities/malcolm-x',
     people: ['Malcolm X'],
@@ -1415,8 +1410,7 @@ export const timelineEvents = [
     year: 1965,
   },
   {
-    body:
-      'Humayun Khan is used as a service-memory record linking American Muslim military service, family testimony, sacrifice, and public civic debate.',
+    body: 'Humayun Khan is used as a service-memory record linking American Muslim military service, family testimony, sacrifice, and public civic debate.',
     date: '2004',
     href: '/stories/service-sacrifice-and-american-muslim-memory',
     people: ['Humayun Khan'],
@@ -1425,8 +1419,7 @@ export const timelineEvents = [
     year: 2004,
   },
   {
-    body:
-      'Khadija bint Khuwaylid is linked to the earliest Muslim community, trade, patronage, and the personal setting of revelation.',
+    body: 'Khadija bint Khuwaylid is linked to the earliest Muslim community, trade, patronage, and the personal setting of revelation.',
     date: 'd. 619 CE / 3 BH',
     href: '/personalities/khadija-bint-khuwaylid',
     people: ['Khadija bint Khuwaylid'],
@@ -1435,8 +1428,7 @@ export const timelineEvents = [
     year: 619,
   },
   {
-    body:
-      'Aisha bint Abi Bakr becomes a major anchor for hadith transmission, legal memory, and early community history.',
+    body: 'Aisha bint Abi Bakr becomes a major anchor for hadith transmission, legal memory, and early community history.',
     date: 'd. 678 CE / 58 AH',
     href: '/personalities/aisha-bint-abi-bakr',
     people: ['Aisha bint Abi Bakr'],
@@ -1445,18 +1437,16 @@ export const timelineEvents = [
     year: 678,
   },
   {
-    body:
-      'Al-Ma\'mun and Baghdad are used as an index point for translation circles, libraries, astronomy, and court patronage.',
+    body: "Al-Ma'mun and Baghdad are used as an index point for translation circles, libraries, astronomy, and court patronage.",
     date: 'early 9th century CE / 3rd century AH',
     href: '/articles/house-of-wisdom',
-    people: ['Al-Ma\'mun', 'Hunayn ibn Ishaq', 'Al-Kindi'],
+    people: ["Al-Ma'mun", 'Hunayn ibn Ishaq', 'Al-Kindi'],
     title: 'House of Wisdom and Abbasid translation culture',
     type: 'Institution',
     year: 830,
   },
   {
-    body:
-      'Al-Khwarizmi connects algebra, calculation, astronomical tables, and the movement of mathematical vocabulary.',
+    body: 'Al-Khwarizmi connects algebra, calculation, astronomical tables, and the movement of mathematical vocabulary.',
     date: 'c. 820 CE / 3rd century AH',
     href: '/personalities/al-khwarizmi',
     people: ['Al-Khwarizmi'],
@@ -1465,8 +1455,7 @@ export const timelineEvents = [
     year: 820,
   },
   {
-    body:
-      'Fatima al-Fihri and the al-Qarawiyyin tradition create an editorial path for endowment, learning, Fez, and source confidence.',
+    body: 'Fatima al-Fihri and the al-Qarawiyyin tradition create an editorial path for endowment, learning, Fez, and source confidence.',
     date: '9th century CE / 3rd century AH',
     href: '/stories/a-waqf-a-mosque-and-a-lasting-institution',
     people: ['Fatima al-Fihri'],
@@ -1475,8 +1464,7 @@ export const timelineEvents = [
     year: 859,
   },
   {
-    body:
-      'Al-Razi links clinical observation, hospital practice, medical ethics, and the development of medical writing.',
+    body: 'Al-Razi links clinical observation, hospital practice, medical ethics, and the development of medical writing.',
     date: '865-925 CE / 251-313 AH',
     href: '/personalities/al-razi',
     people: ['Al-Razi'],
@@ -1485,8 +1473,7 @@ export const timelineEvents = [
     year: 900,
   },
   {
-    body:
-      'Al-Biruni-era research joins astronomy, geography, chronology, measurement, and comparative cultural study.',
+    body: 'Al-Biruni-era research joins astronomy, geography, chronology, measurement, and comparative cultural study.',
     date: '973-1048 CE / 362-440 AH',
     href: '/stories/measuring-the-earth-reading-cultures',
     people: ['Al-Biruni'],
@@ -1495,8 +1482,7 @@ export const timelineEvents = [
     year: 1010,
   },
   {
-    body:
-      'Ibn Sina’s Canon tradition connects medicine, logic, classification, hospitals, teaching, and later commentary.',
+    body: 'Ibn Sina’s Canon tradition connects medicine, logic, classification, hospitals, teaching, and later commentary.',
     date: '980-1037 CE / 370-428 AH',
     href: '/stories/medicine-method-and-the-canon-tradition',
     people: ['Ibn Sina'],
@@ -1505,8 +1491,7 @@ export const timelineEvents = [
     year: 1020,
   },
   {
-    body:
-      'Al-Ghazali’s works let the archive connect theology, law, ethics, philosophy, education, and spiritual reform.',
+    body: 'Al-Ghazali’s works let the archive connect theology, law, ethics, philosophy, education, and spiritual reform.',
     date: '1058-1111 CE / 450-505 AH',
     href: '/personalities/al-ghazali',
     people: ['Al-Ghazali'],
@@ -1515,8 +1500,7 @@ export const timelineEvents = [
     year: 1095,
   },
   {
-    body:
-      'Al-Jazari’s illustrated engineering can support diagrams, workshop notes, animated explainers, and object-centered stories.',
+    body: 'Al-Jazari’s illustrated engineering can support diagrams, workshop notes, animated explainers, and object-centered stories.',
     date: 'late 12th-early 13th century CE',
     href: '/stories/machines-water-and-illustrated-engineering',
     people: ['Al-Jazari'],
@@ -1525,8 +1509,7 @@ export const timelineEvents = [
     year: 1206,
   },
   {
-    body:
-      'Ibn Rushd anchors legal method, medicine, philosophical commentary, Andalusian debate, and reception history.',
+    body: 'Ibn Rushd anchors legal method, medicine, philosophical commentary, Andalusian debate, and reception history.',
     date: '1126-1198 CE / 520-595 AH',
     href: '/personalities/ibn-rushd',
     people: ['Ibn Rushd'],
@@ -1535,8 +1518,7 @@ export const timelineEvents = [
     year: 1180,
   },
   {
-    body:
-      'Rumi’s public memory connects poetry, spiritual instruction, performance, translation, and global reception.',
+    body: 'Rumi’s public memory connects poetry, spiritual instruction, performance, translation, and global reception.',
     date: '1207-1273 CE / 604-672 AH',
     href: '/personalities/jalal-al-din-rumi',
     people: ['Jalal al-Din Rumi'],
@@ -1545,8 +1527,7 @@ export const timelineEvents = [
     year: 1245,
   },
   {
-    body:
-      'Mansa Musa’s pilgrimage and patronage open a West African path through learning, travel, wealth narratives, and trans-Saharan networks.',
+    body: 'Mansa Musa’s pilgrimage and patronage open a West African path through learning, travel, wealth narratives, and trans-Saharan networks.',
     date: 'c. 1280-1337 CE / c. 680-737 AH',
     href: '/personalities/mansa-musa',
     people: ['Mansa Musa'],
@@ -1555,8 +1536,7 @@ export const timelineEvents = [
     year: 1324,
   },
   {
-    body:
-      'Ibn Khaldun’s Muqaddimah page sequence connects biography, video chapters, text excerpts, expert essays, and source notes.',
+    body: 'Ibn Khaldun’s Muqaddimah page sequence connects biography, video chapters, text excerpts, expert essays, and source notes.',
     date: '14th century CE / 8th century AH',
     href: '/articles/muqaddimah',
     people: ['Ibn Khaldun'],
@@ -1565,8 +1545,7 @@ export const timelineEvents = [
     year: 1377,
   },
   {
-    body:
-      'Mimar Sinan’s buildings create a visual timeline path for patronage, Ottoman urban life, mosque architecture, and rights-cleared imagery.',
+    body: 'Mimar Sinan’s buildings create a visual timeline path for patronage, Ottoman urban life, mosque architecture, and rights-cleared imagery.',
     date: '1490-1588 CE / 895-996 AH',
     href: '/stories/building-an-ottoman-cityscape',
     people: ['Mimar Sinan'],
@@ -1575,18 +1554,16 @@ export const timelineEvents = [
     year: 1550,
   },
   {
-    body:
-      'Nana Asma\'u anchors women’s education, poetry, reform, teaching networks, and West African manuscript culture.',
+    body: "Nana Asma'u anchors women’s education, poetry, reform, teaching networks, and West African manuscript culture.",
     date: '1793-1864 CE / 1210-1280 AH',
     href: '/personalities/nana-asmau',
-    people: ['Nana Asma\'u'],
+    people: ["Nana Asma'u"],
     title: 'Women’s education and reform networks',
     type: 'Personality',
     year: 1840,
   },
   {
-    body:
-      'Muhammad Iqbal helps connect modern poetry, philosophy, renewal, political imagination, and public pedagogy.',
+    body: 'Muhammad Iqbal helps connect modern poetry, philosophy, renewal, political imagination, and public pedagogy.',
     date: '1877-1938 CE / 1294-1357 AH',
     href: '/personalities/muhammad-iqbal',
     people: ['Muhammad Iqbal'],
@@ -1729,9 +1706,12 @@ const articleDetailMap: Record<string, ArticleDetail> = {
       { label: 'Article type', value: 'Institution and translation culture' },
       { label: 'Primary place', value: 'Baghdad' },
       { label: 'Main period', value: 'Abbasid period, especially 8th-10th centuries CE' },
-      { label: 'Connected themes', value: 'Libraries, translation, astronomy, medicine, philosophy' },
+      {
+        label: 'Connected themes',
+        value: 'Libraries, translation, astronomy, medicine, philosophy',
+      },
     ],
-    relatedPeople: ['Al-Ma\'mun', 'Hunayn ibn Ishaq', 'Al-Kindi', 'Al-Khwarizmi'],
+    relatedPeople: ["Al-Ma'mun", 'Hunayn ibn Ishaq', 'Al-Kindi', 'Al-Khwarizmi'],
     sections: [
       {
         heading: 'Overview',
@@ -1750,7 +1730,7 @@ const articleDetailMap: Record<string, ArticleDetail> = {
       {
         heading: 'Patronage and institutions',
         body: [
-          'Caliphal and elite patronage mattered because translation, copying, instrument-making, and commentary required money, time, books, and professional networks. Al-Ma\'mun is often associated with this culture, but the article should also show the broader ecology: courts, private libraries, hospitals, observatories, mosques, teaching circles, and book markets.',
+          "Caliphal and elite patronage mattered because translation, copying, instrument-making, and commentary required money, time, books, and professional networks. Al-Ma'mun is often associated with this culture, but the article should also show the broader ecology: courts, private libraries, hospitals, observatories, mosques, teaching circles, and book markets.",
           'This section is deliberately written as a source-confidence zone. Editors can mark which claims are widely accepted, which are debated, and which depend on later historical memory.',
         ],
       },
@@ -1763,17 +1743,28 @@ const articleDetailMap: Record<string, ArticleDetail> = {
     ],
     sourceLinks: [
       { label: 'Wikipedia: House of Wisdom', url: 'https://en.wikipedia.org/wiki/House_of_Wisdom' },
-      { label: 'Wikipedia: Hunayn ibn Ishaq', url: 'https://en.wikipedia.org/wiki/Hunayn_ibn_Ishaq' },
-      { label: 'Wikipedia: Al-Ma\'mun', url: 'https://en.wikipedia.org/wiki/Al-Ma%27mun' },
+      {
+        label: 'Wikipedia: Hunayn ibn Ishaq',
+        url: 'https://en.wikipedia.org/wiki/Hunayn_ibn_Ishaq',
+      },
+      { label: "Wikipedia: Al-Ma'mun", url: 'https://en.wikipedia.org/wiki/Al-Ma%27mun' },
     ],
-    tableOfContents: ['Overview', 'Translation and language work', 'Patronage and institutions', 'What readers can open next'],
+    tableOfContents: [
+      'Overview',
+      'Translation and language work',
+      'Patronage and institutions',
+      'What readers can open next',
+    ],
   },
   muqaddimah: {
     infobox: [
       { label: 'Article type', value: 'Major work' },
       { label: 'Author', value: 'Ibn Khaldun' },
       { label: 'Composed', value: '14th century CE / 8th century AH' },
-      { label: 'Connected themes', value: 'Historiography, society, political authority, economy, education' },
+      {
+        label: 'Connected themes',
+        value: 'Historiography, society, political authority, economy, education',
+      },
     ],
     relatedPeople: ['Ibn Khaldun', 'Al-Maqrizi', 'Ibn Khalikan', 'Al-Tabari'],
     sections: [
@@ -1814,7 +1805,10 @@ const articleDetailMap: Record<string, ArticleDetail> = {
     sourceLinks: [
       { label: 'Wikipedia: Muqaddimah', url: 'https://en.wikipedia.org/wiki/Muqaddimah' },
       { label: 'Wikipedia: Ibn Khaldun', url: 'https://en.wikipedia.org/wiki/Ibn_Khaldun' },
-      { label: 'WikiShia search: Ibn Khaldun', url: 'https://en.wikishia.net/index.php?search=Ibn%20Khaldun' },
+      {
+        label: 'WikiShia search: Ibn Khaldun',
+        url: 'https://en.wikishia.net/index.php?search=Ibn%20Khaldun',
+      },
     ],
     tableOfContents: [
       'Overview',
@@ -1847,7 +1841,10 @@ const articleDetailMap: Record<string, ArticleDetail> = {
     ],
     sourceLinks: [
       { label: 'Wikipedia: Bimaristan', url: 'https://en.wikipedia.org/wiki/Bimaristan' },
-      { label: 'Wikipedia: Islamic medicine', url: 'https://en.wikipedia.org/wiki/Medicine_in_the_medieval_Islamic_world' },
+      {
+        label: 'Wikipedia: Islamic medicine',
+        url: 'https://en.wikipedia.org/wiki/Medicine_in_the_medieval_Islamic_world',
+      },
     ],
     tableOfContents: ['Overview', 'Clinical learning and public welfare'],
   },
@@ -1872,7 +1869,9 @@ const articleDetailMap: Record<string, ArticleDetail> = {
         ],
       },
     ],
-    sourceLinks: [{ label: 'Wikipedia: Astrolabe', url: 'https://en.wikipedia.org/wiki/Astrolabe' }],
+    sourceLinks: [
+      { label: 'Wikipedia: Astrolabe', url: 'https://en.wikipedia.org/wiki/Astrolabe' },
+    ],
     tableOfContents: ['Overview', 'Craft, calculation, and teaching'],
   },
 }
@@ -1882,7 +1881,10 @@ export const getArticleDetail = (article: (typeof articleRows)[number]): Article
     infobox: [
       { label: 'Article type', value: article.kind },
       { label: 'Review state', value: 'Seed draft for editorial expansion' },
-      { label: 'Public modules', value: 'Overview, table of contents, related records, source links' },
+      {
+        label: 'Public modules',
+        value: 'Overview, table of contents, related records, source links',
+      },
     ],
     relatedPeople: ['Ibn Khaldun', 'Al-Biruni', 'Ibn Sina', 'Fatima al-Fihri'],
     sections: [

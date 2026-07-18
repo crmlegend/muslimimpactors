@@ -18,6 +18,8 @@ type CommandResult = {
 const examples = [
   'Change Keith Ellison, Ilhan Omar, and Rashida Tlaib archive track to American civic impact.',
   'Set external video URL for Jawed Karim to https://www.youtube.com/watch?v=jNQXAC9IVRw',
+  'Set display region to North America and homepage priority to 025 for names: Keith Ellison, Ilhan Omar.',
+  'Set hover banner for Keith Ellison to "Public service, law, and civic representation in Minnesota and the United States."',
   'Add Emirates Airline as sponsor.',
   'Create source records for https://example.com/report and https://example.com/profile.',
 ]
@@ -82,7 +84,10 @@ export default function AdminAICommandCenter({ userLabel }: { userLabel: string 
             value={prompt}
           />
           <div className="admin-ai-actions">
-            <button disabled={isSubmitting || !prompt.trim()} onClick={() => submitCommand('preview')}>
+            <button
+              disabled={isSubmitting || !prompt.trim()}
+              onClick={() => submitCommand('preview')}
+            >
               Preview
             </button>
             <button

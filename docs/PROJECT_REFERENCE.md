@@ -1,6 +1,6 @@
 # Muslim Impactors Project Reference
 
-Last updated: 2026-07-13
+Last updated: 2026-07-18
 
 This document is the technical and editorial reference for Muslim Impactors. It explains what was built, how the public website and CMS connect, why the main database fields exist, how the content workflow works, and what a future developer must know before changing the system.
 
@@ -619,9 +619,12 @@ Admin AI Command Center:
 - Every preview and execution request is stored in `AI Jobs` with the prompt and structured operation result.
 - Supported execute operations in the current controlled v0:
   - Bulk-update `people.archiveTrack` for named people or all people when explicitly requested.
+  - Bulk-update homepage display region, ISO country code, visibility, and priority for named people or an explicitly requested all-people set.
+  - Update the admin-maintained hover/info banner for named people, with the same 240-character limit enforced by the People collection.
   - Update external YouTube/video fields for named people.
   - Create draft sponsor records from names.
   - Create draft source records from supplied URLs.
+- Homepage-control commands validate priority as `001` through `999`, normalize country codes to uppercase, and still require Preview or Execute. They do not bypass Payload permissions or audit logging.
 - Requests for code changes, schema changes, permission changes, secrets, deployments, or broad UI changes are captured as review jobs and are not directly executed from production chat.
 
 ### Social Accounts
@@ -857,6 +860,14 @@ Portrait rotation and region behavior:
 - The grid displays at most 24 eligible profiles. An explicitly configured featured profile is retained only when it matches the selected region.
 - A visitor's region selection is stored locally in that browser. Without a saved selection, the homepage defaults to `US / North America`.
 
+July 18, 2026 production curation pass:
+
+- The public People API contained 170 published records. Exactly 36 records were reviewed `american_civic_impact` profiles eligible for the homepage; all 36 had valid United States scope, while no reviewed Canadian, UK, or EU homepage candidates were present.
+- Historical and unreviewed `global_modern_impact` records remain disabled for homepage display. They must not be assigned to a visitor region solely to fill an empty regional tab.
+- Migration `20260718_220000_curate_homepage_profiles` replaces the shared default priority `500` with an editorial order from `001` through `350` and replaces truncated biography excerpts with concise person-specific hover banners.
+- `src/data/homepageProfileCuration.ts` is the shared source for the reviewed U.S. priorities and banners. The public static fallback reads the same values as the production migration so CMS failure does not change the intended ordering or wording.
+- Super admins can make later bulk corrections from `/admin-ai`, for example: `Set display region to North America and homepage priority to 025 for names: Keith Ellison, Ilhan Omar.` Use Preview before Execute.
+
 Expected homepage copy:
 
 - Left column headline: `From The Golden Age`
@@ -964,6 +975,7 @@ Current deployment note:
 - The May 30, 2026 Railway failure `Failed to collect page data for /api/visitor-event` was caused by `PAYLOAD_SECRET` being unavailable during the Docker build stage. The app now permits a build-only placeholder secret during `NEXT_PHASE=phase-production-build` while still requiring the real secret at runtime.
 - The May 30, 2026 live admin screenshot showing `Nothing found` at `/admin/globals/site-settings` was caused by production Postgres missing the `site_settings` global tables. Migration `20260530_142700_create_site_settings_global` creates the global table, sponsor-slot array table, relationship table, default settings row, constraints, and indexes.
 - The American civic impact content pass adds the shared curated profile data file, Full Bio rendering on public personality pages, corrected public person-type fallback data for the 36 civic profiles, and frontend filtering so generic American Muslim video embeds from older CMS records are not rendered on personality/story pages.
+- The July 18 homepage curation pass adds reversible production priorities and concise hover banners for all 36 reviewed U.S. profiles, plus controlled super-admin bulk commands for display region, country code, homepage visibility, priority, and banner wording.
 - If the live homepage has the reviewer layout but `/admin/login` still says `Login - Payload`, Railway is likely still serving an older build for the admin route or the deploy has not fully rolled forward. Check Railway build/deploy logs for the latest GitHub SHA before changing code.
 
 ## 18. QA Checklist
@@ -1020,6 +1032,7 @@ These items were open at the time this document was created:
 5. Expand visitor-event coverage where new public tasks are added.
 6. Keep `PAYLOAD_POSTGRES_PUSH=false` and use migrations for production schema changes.
 7. Direct social publishing remains intentionally disconnected until production Meta, LinkedIn, and X API credentials and account-review requirements are available. The manual approval and audit workflow is ready now.
+8. Research, source, and approve the first Canadian, UK, and EU modern-impact profiles before enabling those region views; do not reuse historical records as placeholders.
 
 ## 20. Developer Notes
 
