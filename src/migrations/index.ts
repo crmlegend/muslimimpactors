@@ -6,6 +6,7 @@ import * as migration_20260531_200000_add_sponsor_showcase_fields from './202605
 import * as migration_20260713_120000_add_profile_rotation_and_social_controls from './20260713_120000_add_profile_rotation_and_social_controls'
 import * as migration_20260713_130000_disable_unreviewed_global_homepage_profiles from './20260713_130000_disable_unreviewed_global_homepage_profiles'
 import * as migration_20260718_220000_curate_homepage_profiles from './20260718_220000_curate_homepage_profiles'
+import * as migration_20260718_230000_add_regional_modern_profiles from './20260718_230000_add_regional_modern_profiles'
 
 export const migrations = [
   {
@@ -47,5 +48,10 @@ export const migrations = [
     up: migration_20260718_220000_curate_homepage_profiles.up,
     down: migration_20260718_220000_curate_homepage_profiles.down,
     name: '20260718_220000_curate_homepage_profiles',
+  },
+  {
+    up: migration_20260718_230000_add_regional_modern_profiles.up,
+    down: migration_20260718_230000_add_regional_modern_profiles.down,
+    name: '20260718_230000_add_regional_modern_profiles',
   },
 ]

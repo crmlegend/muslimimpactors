@@ -138,12 +138,21 @@ export default async function PersonalityDetailPage({ params }: PersonalityDetai
             </div>
             <div>
               <small>Reference starting points</small>
-              <strong>Wiki-backed source links</strong>
-              <p>
-                This page uses original editorial text with wiki references for verification and
-                expansion. Imported open-licensed text must preserve attribution, license, and
-                access date.
-              </p>
+              <strong>
+                {person.sourceReferences?.length ? 'Official source links' : 'Wiki-backed source links'}
+              </strong>
+              {person.sourceReferences?.length ? (
+                <p>
+                  This page uses original editorial text checked against the official records
+                  linked below. Time-sensitive roles should be reconfirmed during scheduled review.
+                </p>
+              ) : (
+                <p>
+                  This page uses original editorial text with wiki references for verification and
+                  expansion. Imported open-licensed text must preserve attribution, license, and
+                  access date.
+                </p>
+              )}
             </div>
             {references.map((reference) => (
               <div key={reference.label}>

@@ -4,6 +4,7 @@ import {
   noApprovedVideoNote,
 } from '../../data/americanCivicProfiles'
 import { reviewedUSHomepageProfilesBySlug } from '../../data/homepageProfileCuration'
+import { regionalModernProfiles } from '../../data/regionalModernProfiles'
 
 export type SearchItem = {
   href: string
@@ -35,6 +36,11 @@ export type Personality = {
   region: string
   role: string
   slug: string
+  sourceReferences?: {
+    label: string
+    note: string
+    url: string
+  }[]
   summary: string
   theme: 'american_muslims' | 'muslims_in_history'
   todayRelevance?: string
@@ -613,8 +619,41 @@ export const historicalPersonalities = buildPersonalityList({
   theme: 'muslims_in_history',
 })
 
+export const regionalModernPersonalities: Personality[] = regionalModernProfiles.map(
+  (profile, index) => ({
+    archiveTrack: 'global_modern_impact',
+    category: profile.category,
+    countryCode: profile.countryCode,
+    displayPriority: profile.displayPriority,
+    displayRegion: profile.displayRegion,
+    editorsPick: false,
+    era: 'Contemporary',
+    externalVideoNote: noApprovedVideoNote,
+    fullBio: profile.fullBio.join('\n\n'),
+    homepageDisplayEnabled: true,
+    hoverBannerText: profile.hoverBannerText,
+    href: `/personalities/${profile.slug}`,
+    initials: initialsFor(profile.name),
+    name: profile.name,
+    popularity: 1180 - index * 10,
+    region: profile.nationality,
+    role: profile.displayTitle,
+    slug: profile.slug,
+    sourceReferences: profile.sources.map((source) => ({
+      label: source.shortCitation,
+      note: 'Official source used for the regional biography and civic-impact review.',
+      url: source.url,
+    })),
+    summary: profile.shortBio,
+    theme: 'american_muslims',
+    tone: tones[(index + 2) % tones.length],
+    wikipediaTitle: wikipediaTitleFor(profile.name),
+  }),
+)
+
 export const personalities: Personality[] = [
   ...americanMuslimPersonalities,
+  ...regionalModernPersonalities,
   ...historicalPersonalities,
 ]
 
@@ -625,45 +664,47 @@ export const getWikiShiaSearchUrl = (person: Pick<Personality, 'name'>) =>
   `https://en.wikishia.net/index.php?search=${encodeURIComponent(person.name)}`
 
 export const getPersonalityReferences = (person: Personality) =>
-  person.theme === 'american_muslims'
-    ? [
-        ...(getAmericanCivicProfileUpdate(person.slug)?.sourceUrls.map((url, index) => ({
-          label: `Curated biography source ${index + 1}`,
-          note: 'Verified source used for the Full Bio and civic-impact data refresh.',
-          url,
-        })) || []),
-        {
-          label: 'Wikipedia biography',
-          note: 'Open encyclopedia reference; import requires attribution and compatible licensing.',
-          url: getWikipediaUrl(person),
-        },
-        {
-          label: 'Wikipedia list of American Muslims',
-          note: 'Starter index for names and categories. Use original editorial prose and verify every claim.',
-          url: 'https://en.wikipedia.org/wiki/List_of_American_Muslims',
-        },
-        ...(person.category === 'American service and armed forces'
-          ? [
-              {
-                label: 'Military History Fandom category',
-                note: 'Starter category for service-related names. Verify each biography with stronger sources.',
-                url: 'https://military-history.fandom.com/wiki/Category:American_Muslims',
-              },
-            ]
-          : []),
-      ]
-    : [
-        {
-          label: 'Wikipedia',
-          note: 'Open encyclopedia reference; import requires attribution and compatible licensing.',
-          url: getWikipediaUrl(person),
-        },
-        {
-          label: 'WikiShia lookup',
-          note: 'Use as a reference lookup when relevant; verify page, license, and editorial fit before importing.',
-          url: getWikiShiaSearchUrl(person),
-        },
-      ]
+  person.sourceReferences?.length
+    ? person.sourceReferences
+    : person.archiveTrack === 'american_civic_impact'
+      ? [
+          ...(getAmericanCivicProfileUpdate(person.slug)?.sourceUrls.map((url, index) => ({
+            label: `Curated biography source ${index + 1}`,
+            note: 'Verified source used for the Full Bio and civic-impact data refresh.',
+            url,
+          })) || []),
+          {
+            label: 'Wikipedia biography',
+            note: 'Open encyclopedia reference; import requires attribution and compatible licensing.',
+            url: getWikipediaUrl(person),
+          },
+          {
+            label: 'Wikipedia list of American Muslims',
+            note: 'Starter index for names and categories. Use original editorial prose and verify every claim.',
+            url: 'https://en.wikipedia.org/wiki/List_of_American_Muslims',
+          },
+          ...(person.category === 'American service and armed forces'
+            ? [
+                {
+                  label: 'Military History Fandom category',
+                  note: 'Starter category for service-related names. Verify each biography with stronger sources.',
+                  url: 'https://military-history.fandom.com/wiki/Category:American_Muslims',
+                },
+              ]
+            : []),
+        ]
+      : [
+          {
+            label: 'Wikipedia',
+            note: 'Open encyclopedia reference; import requires attribution and compatible licensing.',
+            url: getWikipediaUrl(person),
+          },
+          {
+            label: 'WikiShia lookup',
+            note: 'Use as a reference lookup when relevant; verify page, license, and editorial fit before importing.',
+            url: getWikiShiaSearchUrl(person),
+          },
+        ]
 
 export const getPersonalityDetailSections = (person: Personality) => [
   {
@@ -678,7 +719,7 @@ export const getPersonalityDetailSections = (person: Personality) => [
   },
   {
     body:
-      person.theme === 'american_muslims'
+      person.archiveTrack !== 'golden_age_history'
         ? 'The record should expand with verified biography, public service, community impact, interviews, published work, institutional sources, and rights-cleared images or video. Open web lists below are reference starting points, not a substitute for editorial review.'
         : 'The record should expand with primary works, teacher-student links, places, manuscript or media records, scholarly debates, and citations. Wikipedia and WikiShia links below are reference starting points, not a substitute for editorial review.',
     heading: 'Editorial expansion plan',

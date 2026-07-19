@@ -1,7 +1,7 @@
 import config from '@payload-config'
 import { getPayload } from 'payload'
 
-import type { Media, Occupation, Person, Place, Sponsor, Story, Topic } from '@/payload-types'
+import type { Media, Occupation, Person, Place, Source, Sponsor, Story, Topic } from '@/payload-types'
 import type { Where } from 'payload'
 
 import {
@@ -64,6 +64,19 @@ const relationNames = <T extends { name?: string }>(values?: RelationshipValue<T
 
 const firstRelationName = <T extends { name?: string }>(values?: RelationshipValue<T>[] | null) =>
   relationNames(values)[0]
+
+const sourceReferences = (values?: RelationshipValue<Source>[] | null) =>
+  values?.filter(isObjectRelation).flatMap((source) =>
+    source.url
+      ? [
+          {
+            label: source.shortCitation,
+            note: 'Recorded source used for the published biography and editorial review.',
+            url: source.url,
+          },
+        ]
+      : [],
+  ) || []
 
 const mediaURL = (media?: RelationshipValue<Media> | null) => {
   if (!isObjectRelation(media)) {
@@ -145,6 +158,7 @@ const mapCMSPersonality = (person: Person, index: number): Personality => {
     person.scholarlyTradition || topicName || staticMatch?.category || archiveTrackLabels[archiveTrack]
   const region = person.nationality || person.birthPlace || placeName || staticMatch?.region || 'Archive'
   const cmsVideoIsStale = isStaleSeedVideo(person)
+  const references = sourceReferences(person.sources)
 
   return {
     archiveTrack,
@@ -178,6 +192,7 @@ const mapCMSPersonality = (person: Person, index: number): Personality => {
     region,
     role,
     slug: person.slug,
+    sourceReferences: references.length ? references : staticMatch?.sourceReferences,
     summary: person.shortBio,
     theme: themeForTrack(archiveTrack),
     todayRelevance: staticMatch?.todayRelevance,

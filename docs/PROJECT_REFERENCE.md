@@ -976,6 +976,9 @@ Current deployment note:
 - The May 30, 2026 live admin screenshot showing `Nothing found` at `/admin/globals/site-settings` was caused by production Postgres missing the `site_settings` global tables. Migration `20260530_142700_create_site_settings_global` creates the global table, sponsor-slot array table, relationship table, default settings row, constraints, and indexes.
 - The American civic impact content pass adds the shared curated profile data file, Full Bio rendering on public personality pages, corrected public person-type fallback data for the 36 civic profiles, and frontend filtering so generic American Muslim video embeds from older CMS records are not rendered on personality/story pages.
 - The July 18 homepage curation pass adds reversible production priorities and concise hover banners for all 36 reviewed U.S. profiles, plus controlled super-admin bulk commands for display region, country code, homepage visibility, priority, and banner wording.
+- The July 18 regional content release adds six source-reviewed modern-impact profiles: Salma Lakhani and Iqra Khalid for Canada/North America; Sadiq Khan and Humza Yousaf for the United Kingdom; and Aydan Özoguz and Lamya Kaddor for continental Europe. Migration `20260718_230000_add_regional_modern_profiles` publishes original two-paragraph biographies, concise admin-maintained hover banners, display priorities, country/region metadata, and official government-source relationships.
+- Regional profiles intentionally have no embedded video or uploaded portrait in this release. The site uses the existing person-specific Wikipedia portrait lookup when available and otherwise renders the neutral profile/video placeholders; unrelated media must not be substituted.
+- The pre-release rollback reference is `backup/pre-regional-profiles-20260718`, pointing to the previously verified U.S. homepage curation release. The migration down path removes only profile/source rows carrying the `regional-modern-profiles-20260718` release marker.
 - If the live homepage has the reviewer layout but `/admin/login` still says `Login - Payload`, Railway is likely still serving an older build for the admin route or the deploy has not fully rolled forward. Check Railway build/deploy logs for the latest GitHub SHA before changing code.
 
 ## 18. QA Checklist
@@ -1032,7 +1035,7 @@ These items were open at the time this document was created:
 5. Expand visitor-event coverage where new public tasks are added.
 6. Keep `PAYLOAD_POSTGRES_PUSH=false` and use migrations for production schema changes.
 7. Direct social publishing remains intentionally disconnected until production Meta, LinkedIn, and X API credentials and account-review requirements are available. The manual approval and audit workflow is ready now.
-8. Research, source, and approve the first Canadian, UK, and EU modern-impact profiles before enabling those region views; do not reuse historical records as placeholders.
+8. Continue regional expansion beyond the first six approved Canadian, UK, and EU modern-impact profiles. New records require official or similarly authoritative sources, an original full bio, region/country metadata, a maintained hover banner, and person-specific or placeholder media only.
 
 ## 20. Developer Notes
 
